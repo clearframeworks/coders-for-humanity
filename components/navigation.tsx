@@ -118,6 +118,13 @@ export function Navigation() {
           ))}
         </nav>
         <div className="sidebar-bottom">
+          <Link
+            className="button primary sidebar-join"
+            href="/join"
+            onClick={() => setOpen(false)}
+          >
+            Create profile <ArrowRight size={15} />
+          </Link>
           <ThemeSettings />
           <div className="open-mark">
             <span />A place to build together
@@ -146,6 +153,9 @@ export function Topbar() {
         </Link>
         <Link className="signin" href="/login">
           Sign in <ArrowRight size={15} />
+        </Link>
+        <Link className="button primary" href="/join">
+          Create profile
         </Link>
       </div>
     </div>

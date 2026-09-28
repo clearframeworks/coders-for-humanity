@@ -4,14 +4,17 @@ import { signIn } from "@/app/actions";
 export function LoginForm({
   next,
   disabled,
+  intent = "signin",
 }: {
   next: string;
   disabled: boolean;
+  intent?: "signin" | "signup";
 }) {
   const [state, action, pending] = useActionState(signIn, {});
   return (
     <form action={action} className="auth-card">
       <input type="hidden" name="next" value={next} />
+      <input type="hidden" name="intent" value={intent} />
       <button
         className="button primary"
         name="provider"
@@ -41,7 +44,11 @@ export function LoginForm({
         value="email"
         disabled={disabled || pending}
       >
-        {pending ? "Connecting…" : "Send a sign-in link"}
+        {pending
+          ? "Connecting…"
+          : intent === "signup"
+            ? "Send a verification link"
+            : "Send a sign-in link"}
       </button>
       {(state.error || state.message) && (
         <div role="status" className={`notice ${state.error ? "error" : ""}`}>

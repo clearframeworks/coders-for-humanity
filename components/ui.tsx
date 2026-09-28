@@ -14,6 +14,8 @@ import {
   Globe2,
 } from "lucide-react";
 import type { Catalog, Project } from "@/lib/types";
+import { EditorialPhoto } from "./editorial-photo";
+import { programPhoto } from "@/lib/photos";
 const icons = {
   Sprout,
   House,
@@ -113,13 +115,12 @@ export function ProjectCard({
   ).length;
   return (
     <article className="project-card">
-      <div className={`project-art art-${program?.slug}`}>
-        <ProgramIcon name={program?.icon || ""} size={47} />
-        <span className="art-coordinate">
-          CFH / {project.id.slice(0, 3).toUpperCase()}
-        </span>
-        <div className="art-lines" />
-      </div>
+      <Link
+        href={`/projects/${project.slug}`}
+        aria-label={`Explore ${project.name}`}
+      >
+        <EditorialPhoto name={programPhoto(program?.slug)} />
+      </Link>
       <div className="project-body">
         <div className="card-kicker">
           {program?.name}

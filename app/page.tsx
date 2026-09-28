@@ -15,6 +15,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getGitHub, repositoryUrl } from "@/lib/github";
 import { getPosts, communityReady } from "@/lib/community";
 import { CommunityFeed } from "@/components/community-feed";
+import { EditorialPhoto } from "@/components/editorial-photo";
 
 export default async function Home({
   searchParams,
@@ -41,40 +42,40 @@ export default async function Home({
             together.
           </p>
         </div>
-        <Link className="button primary" href="/discussions/new">
-          <MessagesSquare size={16} /> Start a conversation
+        <Link className="button primary" href="/join">
+          Create your profile <ArrowRight size={16} />
         </Link>
       </header>
       <div className="hub-layout">
         <div className="hub-main">
           <section className="founding-banner">
-            <div className="hub-meta">
-              <span className="hub-tag">FOUNDING PROJECT</span>
-              <span>Help shape this space</span>
-            </div>
-            <h2>
-              We’re building the place
-              <br />
-              where we build together.
-            </h2>
-            <p>
-              The first project is this community. Bring your skills to the
-              workspace, its safeguards, and the way we hand work from one
-              person to the next.
-            </p>
-            <div className="hub-row">
-              <Link
-                className="button primary"
-                href="/projects/community-platform"
-              >
-                Enter the project <ArrowRight size={16} />
-              </Link>
-              <Link className="text-link" href="/contribute">
-                Find your first task <ArrowUpRight size={15} />
-              </Link>
-            </div>
-            <div className="banner-mark" aria-hidden="true">
-              {"{ }"}
+            <EditorialPhoto
+              name="collaboration"
+              priority
+              className="founding-photo"
+            />
+            <div className="founding-story">
+              <div className="hub-meta">
+                <span className="hub-tag">FOUNDING PROJECT</span>
+                <span>Help shape this space</span>
+              </div>
+              <h2>Help build our shared workspace.</h2>
+              <p>
+                A place for people to find a project, pick up useful work, and
+                leave it better for the next person. Our first project is this
+                community.
+              </p>
+              <div className="hub-row">
+                <Link
+                  className="button primary"
+                  href="/projects/community-platform"
+                >
+                  Enter the project <ArrowRight size={16} />
+                </Link>
+                <Link className="text-link" href="/contribute">
+                  Find your first task <ArrowUpRight size={15} />
+                </Link>
+              </div>
             </div>
           </section>
           <nav className="hub-tabs" aria-label="Community view">
@@ -292,7 +293,11 @@ export default async function Home({
               <span className="hub-count">1</span>
             </div>
             <Link className="rail-project" href="/projects/community-platform">
-              <div className="project-monogram">{"</>"}</div>
+              <EditorialPhoto
+                name="workshop"
+                className="rail-project-photo"
+                sizes="64px"
+              />
               <div>
                 <strong>Community platform</strong>
                 <p>Civic infrastructure</p>

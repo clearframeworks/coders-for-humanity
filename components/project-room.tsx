@@ -7,6 +7,7 @@ import { CommunityFeed, CommunityConnectionNote } from "./community-feed";
 import { CommunityAction } from "./community-forms";
 import { getPosts, communityReady, getViewer } from "@/lib/community";
 import { getGitHub, repositoryUrl } from "@/lib/github";
+import { EditorialPhoto } from "./editorial-photo";
 
 const tabs = [
   "Overview",
@@ -35,6 +36,9 @@ export async function ProjectRoom({
   const root = `/projects/${p.slug}`;
   return (
     <div className="page-content">
+      {tab === "Overview" && (
+        <EditorialPhoto name="workshop" className="project-cover" priority />
+      )}
       <div className="project-room-header">
         <div className="page-intro">
           <div className="eyebrow">
