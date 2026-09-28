@@ -1,4 +1,4 @@
-import { createClient, isDemo } from "./supabase";
+import { createClient, isDemo, configured } from "./supabase";
 type Row = { id: string; [key: string]: unknown };
 type Member = {
   id: string;
@@ -38,6 +38,44 @@ export async function projectRecords(
     funding: [],
   };
   if (isDemo()) return empty;
+  if (!configured())
+    return projectId === "cf000000-0000-4000-8000-000000000001"
+      ? {
+          ...empty,
+          repositories: [
+            {
+              id: "platform-repo",
+              name: "CFH platform",
+              url: "https://github.com/clearframeworks/coders-for-humanity",
+            },
+          ],
+          deployments: [
+            {
+              id: "cfh-live",
+              name: "Community workspace",
+              url: "https://cfh.retehost.com",
+              status: "PUBLIC FOUNDATION",
+            },
+          ],
+          milestones: [
+            {
+              id: "foundation",
+              title: "Publish shared context and founding work",
+              status: "IN PROGRESS",
+            },
+            {
+              id: "identity",
+              title: "Verify identity, permissions, and moderation",
+              status: "BLOCKED",
+            },
+            {
+              id: "pilot",
+              title: "Complete a contribution with a founding human team",
+              status: "PLANNED",
+            },
+          ],
+        }
+      : empty;
   const db = await createClient();
   const specs = [
     ["sources", "research_sources", "*"],
@@ -95,7 +133,7 @@ export type LedgerRecord = {
   source_url: string;
 };
 export async function ledger() {
-  if (isDemo())
+  if (isDemo() || !configured())
     return { funding: [] as LedgerRecord[], expenses: [] as LedgerRecord[] };
   const db = await createClient();
   const [f, e] = await Promise.all([
@@ -110,7 +148,7 @@ export async function ledger() {
   };
 }
 export async function impactRecords() {
-  if (isDemo()) return [];
+  if (isDemo() || !configured()) return [];
   const db = await createClient();
   const { data, error } = await db
     .from("impact_records")

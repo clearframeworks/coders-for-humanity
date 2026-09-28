@@ -1,9 +1,11 @@
 import { cache } from "react";
 import { demoCatalog } from "./demo";
-import { createClient, isDemo } from "./supabase";
+import { createClient, isDemo, configured } from "./supabase";
+import { foundingCatalog } from "./founding";
 import type { Catalog } from "./types";
 export const getCatalog = cache(async (): Promise<Catalog> => {
   if (isDemo()) return demoCatalog;
+  if (!configured()) return foundingCatalog;
   const db = await createClient();
   const tables = [
     "programs",

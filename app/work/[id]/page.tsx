@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getCatalog } from "@/lib/catalog";
 import { PageIntro, Badge, DemoNote } from "@/components/ui";
 import { ClaimButton } from "@/components/claim-button";
+import { communityReady } from "@/lib/community";
 export default async function TaskPage({
   params,
 }: {
@@ -71,7 +72,32 @@ export default async function TaskPage({
             <p>No repository issue is linked yet.</p>
           )}
         </section>
-        <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
+        {communityReady() ? (
+          <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
+        ) : (
+          <section>
+            <h2>Prepare your contribution</h2>
+            <p>
+              Shared claiming opens after member accounts are verified. Read the
+              dependencies, prepare your approach, and arrange independent
+              review before implementation.
+            </p>
+            <div className="hub-row">
+              <Link
+                className="button primary"
+                href={`/discussions/new?project=${t.project_id}`}
+              >
+                Draft an introduction
+              </Link>
+              <Link className="button" href="/workspace">
+                Write a handoff
+              </Link>
+              <Link className="text-link" href="/harness">
+                Review the gates ↗
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

@@ -1,28 +1,33 @@
-# Verification record
+# Community workspace verification — September 28, 2026
 
-Verified locally on September 27–28, 2026.
+The candidate replaces the demonstration homepage with a community workspace and a real founding project. No invented people, posts, projects, or outcomes are shown in the default mode.
 
-| Check | Result |
+| Check | Evidence |
 | --- | --- |
-| Next.js production build | Passed; all generated routes compiled |
-| Strict TypeScript | Passed |
-| Domain and PostgreSQL tests | 14 passed |
-| Chromium end-to-end tests | 9 passed |
-| Automated WCAG A/AA scan | No reported violations on home, contribution board, proposal form, project detail, and login in light and dark modes |
-| Theme preference | Light/Dark persistence across reload; System responds to OS appearance |
-| Mobile navigation | 390px viewport; menu links work; no homepage horizontal overflow |
-| Browser console and runtime errors | None reported during desktop visual review |
-| Dependency audit | Zero known vulnerabilities after updating the development CLI; production audit also clean |
-| Original logo | SHA-256 matches the supplied file exactly |
+| Production build and TypeScript | Passed on Next.js 16.3.6 |
+| Domain, PostgreSQL and release-policy tests | 28 passed; all three migrations executed in PGlite |
+| Chromium end-to-end suite | 12 passed, exit code 0 |
+| Accessibility | No automated WCAG A/AA violations across ten working screens in both light and dark modes |
+| Drafts | Conversation fields restored and cleared; project context carried into composer |
+| Personal handoff | Save, restore, edit, Markdown export contents, and clear verified |
+| Responsive navigation | Menu works; seven screens have no horizontal overflow at 390px |
+| Theme | Light/Dark persist; System responds to OS appearance |
+| Dependency audit | Zero known vulnerabilities in locked dependencies |
+| Source credential scan | No known credential patterns in staged/tracked source; .env files excluded |
+| Browser visual inspection | Production candidate inspected; no browser errors reported |
 
-Desktop captures are in `artifacts/home-light.png` and `artifacts/home-dark.png`.
+Database tests verify public/private isolation, profile and authority escalation denial, atomic claims and proposals, private saves and notifications, hidden thread/reply isolation, contribution-only membership, HTTPS submission evidence, independent review, invalidation of old approvals, stale-browser denial, and rate limits. Founding task fields match the public backlog exactly.
 
-Database checks executed the full SQL migration in PGlite, including PostgreSQL roles and row-level security. They verify public/private record separation, rejection of profile/role escalation, a second task claimant being rejected, atomic proposal/source creation, proposal ownership, duplicate handling, and the submission rate limit.
+Browser tests exercise real project rooms and all six tabs, work filters and board views, proposal and conversation drafts, notebook exports, disabled unconfigured sign-in, review gating, public routes, and 404s for removed fictional records.
 
-Browser checks also verify project navigation, filter intersections, Kanban, example-task claim restrictions, browser draft restoration, duplicate-project suggestions, search, transparent empty financial records, all specified public routes, and genuine 404 responses.
+The initial browser run completed every test assertion but stalled during Windows web-server teardown; it was stopped. A separate managed production server was then used and the entire suite completed with exit code 0. No test was skipped or weakened.
 
-## Limits of this evidence
+## Limits
 
-No dedicated hosted Supabase project, GitHub OAuth application, email delivery provider, or hosting deployment was provisioned. Provider-dependent authentication and shared writes are implemented but require configuration and real-provider staging verification. No production domain was changed.
+PGlite tests exercise real PostgreSQL SQL/RLS, not a hosted Supabase deployment. A dedicated database, OAuth/email setup, and multi-user staging verification remain pending. No hosted account or shared-posting success is claimed. Provider branch protection, private vulnerability reporting, reviewer staffing, and release-approver enforcement have not been verified.
 
-Automated scans are not a complete WCAG conformance assessment. Screen-reader testing, community/domain review, and operating acceptance remain necessary before public launch. Administrative publication, GitHub synchronization, comment moderation, review tooling, and notification delivery are not active workflows; see architecture.md for their boundaries.
+The public GitHub adapter reads public repository activity and surfaces failures. The repository exists but the public source upload and Git-triggered deployment connection remain pending explicit owner approval after automatic approval review rejected that combined action. No deployment secrets are in contributor CI.
+
+Automated accessibility scans do not establish full WCAG conformance. Human keyboard/screen-reader and usability assessment is a founding work item. Scale/load testing for thousands of contributors remains a later milestone.
+
+Live deployment evidence is recorded separately in the release report. The earlier report, production-release-20260928.md, describes the superseded institutional demonstration.

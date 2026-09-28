@@ -13,9 +13,9 @@ export default async function Account() {
           eyebrow="YOUR CONTRIBUTIONS"
           title="A record of useful work."
         />
-        <EmptyState title="Accounts are not connected in this demonstration">
+        <EmptyState title="Member accounts are not connected yet">
           You can browse the public catalogue and save a proposal draft in your
-          browser. <Link href="/contribute">Explore example tasks.</Link>
+          browser. <Link href="/contribute">Explore the founding tasks.</Link>
         </EmptyState>
       </div>
     );

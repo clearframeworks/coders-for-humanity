@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Navigation, Topbar } from "@/components/navigation";
 import "./globals.css";
+import "./hub.css";
 export const metadata: Metadata = {
   title: {
-    default: "Coders for Humanity — Open engineering for public good",
+    default: "Coders for Humanity — Community workspace",
     template: "%s | Coders for Humanity",
   },
   description:
@@ -38,7 +39,7 @@ export default function RootLayout({
           <footer>
             <div>
               <strong>Coders for Humanity</strong>
-              <p>We build it, maintain it, document it, and give it away.</p>
+              <p>People, shared context, and work that matters.</p>
             </div>
             <div>
               <Link href="/constitution">Constitution</Link>

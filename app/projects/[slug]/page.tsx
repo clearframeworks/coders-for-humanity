@@ -4,6 +4,7 @@ import { getCatalog } from "@/lib/catalog";
 import { projectRecords } from "@/lib/records";
 import { PageIntro, Badge, DemoNote } from "@/components/ui";
 import { TaskRow } from "@/components/work-board";
+import { ProjectRoom } from "@/components/project-room";
 const sections = [
   "Overview",
   "Evidence",
@@ -23,12 +24,18 @@ const sections = [
 ];
 export default async function ProjectPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const [c, { slug }] = await Promise.all([getCatalog(), params]);
   const p = c.projects.find((p) => p.slug === slug);
   if (!p) notFound();
+  if (p.slug === "community-platform")
+    return (
+      <ProjectRoom project={p} catalog={c} tab={(await searchParams).tab} />
+    );
   const records = await projectRecords(p.id);
   const work = c.tasks.filter((t) => t.project_id === p.id);
   return (

@@ -8,4 +8,4 @@
 6. Create a hosting preview, confirm all routes and authenticated actions, record the candidate and rollback coordinate, and obtain any applicable production authorization.
 7. Verify production after release. Record the migration, deployment, test evidence, known limitations, and operating ownership.
 
-The current build creates no hosted environment or production domain. It does not change the separate Clear Frameworks production site.
+The public foundation is hosted at https://cfh.retehost.com in the dedicated coders-for-humanity project. Shared authentication and database writes remain unavailable until provider setup and staging acceptance. This release does not change the separate Clear Frameworks production site. Production credentials never belong in contributor CI jobs.

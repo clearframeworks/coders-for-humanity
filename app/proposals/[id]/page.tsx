@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient, isDemo } from "@/lib/supabase";
+import { createClient, isDemo, configured } from "@/lib/supabase";
 import { PageIntro, Badge } from "@/components/ui";
 import { proposalSteps } from "@/lib/validation";
 export default async function Proposal({
@@ -8,7 +8,7 @@ export default async function Proposal({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (isDemo() || !/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  if (isDemo() || !configured() || !/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = await createClient();
   const {
     data: { user },

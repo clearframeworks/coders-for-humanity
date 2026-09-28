@@ -21,7 +21,7 @@ async function checkOrigin() {
 async function member() {
   if (isDemo() || !configured())
     throw new Error(
-      "This is a demonstration. Accounts and shared changes become available when the platform is connected.",
+      "Member accounts are not connected yet. Shared changes are unavailable until identity and permissions are verified.",
     );
   await checkOrigin();
   const db = await createClient();

@@ -49,9 +49,7 @@ export default async function Impact() {
           organizations using a system from documented outcomes for people and
           communities.
         </p>
-        <Link href="/docs/impact-reporting">
-          Read our reporting standard ↗
-        </Link>
+        <Link href="/docs/impact-reporting">Read our reporting standard ↗</Link>
       </div>
     </div>
   );

@@ -1,14 +1,25 @@
 # Coders for Humanity
 
-Open engineering for the human problems worth solving.
+A community workspace for people building public-interest projects together: shared context, useful contributions, independent review, and handoffs that let the next person continue.
 
-A standalone Next.js / TypeScript platform for public-interest engineering. It includes the institution, ten programs, project records, a problem library, contribution filters, five work-board views, a structured proposal workflow, contributor profiles, decision records, a handbook, and evidence-based transparency and impact pages.
+This source is the **public foundation**, not a demonstration catalogue. It contains one real founding project—the community platform itself—and seven unassigned work briefs with stable UUIDs. It does not invent members, conversations, completed contributions, impact, or funding.
 
-Live at https://cfh.retehost.com in explicitly labelled demonstration mode. See `docs/production-release-20260928.md` for the verified deployment and recovery coordinate.
+The site uses the dedicated Vercel project `coders-for-humanity` and domain [cfh.retehost.com](https://cfh.retehost.com). A domain's existence does not establish which source revision is deployed. Consult the dated production release record in `docs/` for the verified deployment, source revision, checks, limitations, and rollback coordinate. This README does not certify that the current working tree has been released.
+
+## What works in this source
+
+- Community and project rooms, a real founding backlog, contribution filters, project context, knowledge, and a harness charter.
+- Light, dark, and system appearance, with a persistent browser preference.
+- Public GitHub repository metadata, open issues, pull requests, and commits through a bounded server read adapter. Empty or unavailable activity is shown honestly.
+- Conversation drafts stored on this device, including title, body, conversation type, and project; the contributor can continue a draft on GitHub.
+- A personal handoff notebook with context, changes, evidence, remaining work, and review needs. Save, edit, delete, clear, and export Markdown locally.
+- Implemented account, community, assignment, inbox, and independent-review interfaces and database rules. These shared workflows remain unavailable until a dedicated hosted database and authentication are configured and verified.
+
+Local notes are not encrypted, synchronized, submitted, or approved. Browser data removal can erase them. Export before changing devices; do not put credentials or private information in them.
 
 ## Run locally
 
-Requirements: Node.js 22 or newer and npm. No database is required to explore the demonstration.
+Use Node.js 22 or newer and npm. The public foundation requires no database.
 
 ```powershell
 npm ci
@@ -16,30 +27,38 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3100. For a production build, run `npm run build` then `npm run start`. Both servers use port 3100; stop one before starting the other.
+Open [localhost:3100](http://localhost:3100). Production mode is `npm run build`, then `npm run start`. The servers share port 3100; stop one before starting the other.
 
-The appearance setting at the bottom of the navigation offers **Light**, **Dark**, and **System**. System is the initial default. A browser preference is restored before paint, persists across visits, and is independent of authentication. System mode responds to operating-system changes without a reload.
+`CFH_DEMO_MODE=false` is the foundation setting and is explicitly set in `vercel.json`. With no Supabase configuration, `lib/founding.ts` provides the actual founding project and `lib/harness.ts` provides its seven work briefs. With configured Supabase, the catalogue reads published database records and reports failures rather than replacing them with sample data. The legacy demo fixture remains available only through an explicit `CFH_DEMO_MODE=true` setting for isolated development; it is not the intended production catalogue.
 
-## Demonstration and real data
+## Provider and publication status
 
-`CFH_DEMO_MODE=true` (also the safe default when unspecified) loads `lib/demo.ts`. Every example project, task, problem, person, and decision is labelled. Claims and shared submissions are disabled. Proposal drafts may be explicitly saved in localStorage on the current device. No fake impact, partners, grants, or financial records are seeded.
+| Boundary | Current state |
+| --- | --- |
+| Source repository | Public repository `clearframeworks/coders-for-humanity` exists. Source upload awaits explicit approval after automatic approval review rejected the earlier combined public push and deployment-link operation. Do not infer that the repository contains this source. |
+| Git-triggered deployments | No repository-to-Vercel deployment link was established. Production remains an owner-operated release. |
+| Supabase | Three migrations and protected actions are implemented and tested locally. No dedicated hosted CFH Supabase project has been provisioned. Organization selection and provisioning cost approval remain pending. |
+| Authentication | GitHub/email sign-in requires provider configuration and real-session verification. It is not operational merely because the UI or SQL exists. |
+| Harness team | Roles and work briefs are defined. Independent reviewers and release stewards have not been appointed; provider-enforced gates have not been verified. |
 
-`CFH_DEMO_MODE=false` reads the dedicated Supabase database. If the connection or schema fails, the interface reports an error; it does not silently substitute example data. Public records use explicit publication and profile visibility boundaries. The initial migration seeds only the ten program definitions and MIT software license.
+See [the human takeover guide](docs/HUMAN-TAKEOVER.md) for the ordered next steps. Do not reuse an unrelated application's database or credentials.
 
-## Connect a dedicated Supabase project
+## Connect the dedicated database
 
-Do not reuse an unrelated application's project or credentials.
+After the owner explicitly chooses the Supabase organization and approves the quoted provisioning cost:
 
-1. Create or identify the dedicated CFH Supabase project and review `supabase/migrations/20260928025534_institutional_foundation.sql`.
-2. Apply that migration in the project's SQL editor or through the Supabase CLI's reviewed migration workflow. It creates normalized entities, foreign-key indexes, RLS policies, private audit and rate-limit tables, and transactional task-claim/proposal functions.
-3. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local` or the hosting environment. This application does **not** need a service-role key.
-4. Set `NEXT_PUBLIC_SITE_URL` to the exact browser origin, including port locally. `http://localhost:3100` and `http://127.0.0.1:3100` are different origins. The server rejects cross-origin mutations.
-5. Enable GitHub OAuth in Supabase Auth, create its GitHub OAuth application, and enter provider credentials only in the provider dashboard. Enable email authentication and configure delivery/rate limits. Use the Supabase PKCE email flow.
-6. Allow only the exact application callback URL (`SITE_URL/auth/callback`) in Supabase Auth. Configure the site URL and appropriate preview callback URLs explicitly; avoid broad production wildcards.
-7. Set `CFH_DEMO_MODE=false` and rebuild/restart. Sign in and create a contributor profile. Profiles are private until the contributor opts into publication.
-8. Complete the staging checks below before public operation.
+1. Provision the dedicated CFH project and a staging environment appropriate for testing.
+2. Review and apply **all three migrations in filename order**:
+   - `20260928025534_institutional_foundation.sql`
+   - `20260928034553_community_workspace.sql`
+   - `20260928040326_founding_human_work.sql`
+3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the exact `NEXT_PUBLIC_SITE_URL`. This application does not require a service-role key in its web runtime. Keep provider credentials out of source control.
+4. Configure GitHub OAuth and email authentication in the provider dashboards. Set explicit callback URLs ending in `/auth/callback`; avoid broad production wildcards. Configure delivery, rate limits, and recovery.
+5. Keep `CFH_DEMO_MODE=false`. Rebuild after changing public environment values.
+6. Verify anonymous, member A, member B, and independent maintainer sessions through the hosted application and Data API. Test private data isolation, role escalation, claim races, hidden conversations, rate limits, current-submission review, revoked sessions, and sign-out.
+7. Run provider security advisors and rehearse backup recovery. Enable shared participation only after the harness reviewer and owner accept the evidence.
 
-The private `institutional_roles` table models future governing roles. Role provisioning is an operator database action; no public self-promotion path exists. Public project creation and privileged editorial publishing are intentionally operator-managed in this foundation. Do not grant blanket authenticated write access to published records.
+Profiles are private until the contributor opts into publication. Project membership does not confer maintainer or release authority. Privileged role appointments remain explicit operator actions.
 
 ## Verification
 
@@ -52,52 +71,28 @@ npm run test:e2e
 npm audit
 ```
 
-`npm test` runs domain behavior checks and an actual embedded PostgreSQL engine (PGlite) with Supabase-compatible auth roles. It executes the full schema and checks RLS, private profiles, unpublished projects, unauthorized role changes, task claiming, proposal ownership, transactional evidence, duplicate handling, and rate limits.
+The database suite executes PostgreSQL in PGlite with Supabase-compatible roles. It covers the migrations, row-level access, protected mutations, claim isolation, discussion boundaries, independent reviews, and founding-record consistency. Local success does not prove hosted Auth, provider permissions, or production deployment controls.
 
-Browser tests use Chromium against port 3100. They check routes, task filtering, board views, search, draft restoration, mobile navigation, light/dark/system persistence, and automated WCAG A/AA rules. These automated checks do not establish full WCAG 2.2 AA conformance. Test screen readers, zoom, touch targets, and low-bandwidth devices with people before release.
+Browser checks cover the public journeys, drafts, notebook, themes, mobile navigation, and accessibility rules. Automated checks do not establish complete WCAG conformance; people must test screen readers, keyboard use, zoom, and constrained devices. The final release record owns the check results for the specific deployed candidate.
 
-### Required staging checks with the real providers
+## Source map
 
-- GitHub OAuth and email links return to the correct origin and fail safely on expired or reused codes.
-- Two independent accounts cannot read each other's private proposals, private profiles, or notifications.
-- A task can be claimed only once. Example, unpublished, blocked, or dependency-incomplete work cannot be claimed.
-- A complete proposal creates its source records atomically; duplicate titles and rate limits behave as documented.
-- Profile creation, editing, opting into publication, and opting out work through the real Data API.
-- Verify session refresh, sign-out, email delivery, recovery, backup restoration, and the deployed response headers.
-- Run Supabase security advisors. Review every public table, function grant, and RLS policy.
+| Path | Responsibility |
+| --- | --- |
+| `app/` | Public rooms, authenticated workspaces, server actions, and routes |
+| `components/` | Interface, forms, local drafts, notebook, and appearance controls |
+| `lib/catalog.ts`, `lib/founding.ts` | Public catalogue and actual founding project |
+| `lib/community.ts` | Authenticated viewer and discussion reads |
+| `lib/github.ts` | Public GitHub read adapter with bounded requests |
+| `lib/harness.ts` | Founding tasks and release policy model |
+| `supabase/migrations/` | Normalized data, access rules, protected actions, and real founding records |
+| `tests/` | Domain, database, browser, and accessibility verification |
+| `docs/` | Operating boundaries, release evidence, and human handoff |
 
-OAuth/email delivery and a hosted Supabase connection require a dedicated provider configuration and are not claimed as verified by the local tests.
+The shared-workspace design and scale roadmap are in [architecture.md](docs/architecture.md). The repository boundary is in [github-integration.md](docs/github-integration.md). Read [SECURITY.md](SECURITY.md), [GOVERNANCE.md](GOVERNANCE.md), and [the harness charter](docs/harness-team.md) before changing authority.
 
-## Architecture
+## License and evidence
 
-```text
-app/                 Next.js public routes, authenticated account routes, server actions
-components/          Reusable layout, records, filters, forms, and appearance controls
-lib/catalog.ts       Request-scoped public read adapter: examples or Supabase
-lib/records.ts       Project, financial, and verified outcome records
-lib/validation.ts    Shared structured proposal and profile validation
-lib/content.ts       Institutional principles and contributor handbook
-lib/types.ts         Domain types and taxonomy
-supabase/migrations/ Normalized PostgreSQL schema, RLS, transactional protected actions
-tests/               Domain, database, browser, and accessibility verification
-docs/                Operational and architectural handoff
-public/              Original supplied logo and public assets
-```
+Application source is MIT. The original supplied logo is preserved in `public/cfh-logo.png`; the software license does not transfer trademark rights or institutional authority.
 
-Public pages primarily render on the server. Client JavaScript is limited to navigation, appearance, interactive forms, and protected action controls. The contribution filters work with ordinary GET forms and shareable URLs. Search has a common record shape that can be replaced with PostgreSQL full-text ranking; initial reads are bounded to 1,000 records per entity. Add database pagination and search RPCs before scaling beyond that bound.
-
-## GitHub and deployment
-
-Repository, issue, release, milestone, and contributor relationships belong in the institution's data model; source code and review remain on GitHub. This build supports validated repository and issue links. Automatic issue/PR/release synchronization is not activated; its design is in `docs/github-integration.md`.
-
-The application runs on Vercel as a single Next.js service in the dedicated `coders-for-humanity` project at https://cfh.retehost.com. Deployment configuration explicitly preserves demonstration mode. No remote Git repository or fundraising endpoint was created. Before activating connected accounts and shared writes, complete the provider checks above and update the demonstration settings in `vercel.json` as well as the provider environment.
-
-## Public reporting
-
-`/api/transparency` returns schema-versioned, machine-readable funding and expense records. No published records is a data-availability statement, never a claim of audited zero finances. `/impact` includes only verified records linked to non-demo projects, with method, source, period, and limitations.
-
-See `CONTRIBUTING.md`, `GOVERNANCE.md`, `SECURITY.md`, and `docs/architecture.md` before changing the platform's authority or publication boundaries.
-
-## License
-
-Application source: MIT. The supplied logo is preserved unchanged in `public/cfh-logo.png`. An open-source software license does not convey ownership of institutional governance or confer trademark rights. Other artifact types require an appropriate open license and provenance review.
+Impact and financial pages distinguish unavailable records from audited zero activity. Only verified, sourced outcomes belong in public impact reports. No completed human pilot or measured public-benefit outcome is claimed by this foundation.

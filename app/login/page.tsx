@@ -21,8 +21,9 @@ export default async function Login({
       </PageIntro>
       {disabled && (
         <div className="notice">
-          This is a demonstration. Account sign-in is not connected yet. Public
-          pages and browser-saved proposal drafts are available.
+          Member accounts are not connected yet. Explore the public work,
+          prepare a local draft, and review the founding tasks. Shared posting
+          and task claiming open after identity and permissions are verified.
         </div>
       )}
       {p.error && (

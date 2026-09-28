@@ -2,7 +2,7 @@
 
 ## Reporting
 
-Do not report vulnerabilities, credentials, or personal data in public issues. Once an official GitHub repository is established, enable GitHub private vulnerability reporting and use that channel. Before public launch, appoint a security maintainer and publish a working private channel. No reporting inbox is claimed by this local foundation.
+Do not report vulnerabilities, credentials, or personal data in public issues. The repository is `clearframeworks/coders-for-humanity`. A staffed private reporting channel is not yet verified; contact a known repository owner privately before sending sensitive details. The owner must enable and verify private vulnerability reporting, appoint a security maintainer and publish response coverage. No unverified inbox or staffed team is claimed here.
 
 Include affected versions, safe reproduction steps, expected and observed behavior, potential impact, and relevant sanitized evidence. Do not access another person's information or test destructively. Agree disclosure timing with the security maintainer and document a repair and release plan.
 
@@ -20,6 +20,8 @@ Include affected versions, safe reproduction steps, expected and observed behavi
 The CSP permits inline framework scripts/styles. Strengthening it with per-request nonces is a deployment improvement; do not claim that this baseline eliminates every XSS risk.
 
 ## Operator obligations
+
+Read [the harness team charter](docs/harness-team.md). Community membership and task acceptance never grant merge or deployment authority. Source changes require automated checks, independent maintainer review, security review and a release steward's approval for the exact commit and preview. New changes invalidate previous evidence. CODEOWNERS and workflow definitions do not establish provider-enforced gates; verify branch rules, real check runs, distinct reviewer identities and production permissions directly. Public CI has no deployment step or production credentials.
 
 Use a dedicated database, restrict callback origins, configure email delivery, run advisors, keep dependencies patched, rotate compromised credentials, and verify backups. Privileged publishing through SQL must use auditable provider access and a recorded institutional decision. Audit-log retention, rate-limit cleanup, private reporting, and incident response need named operating owners before launch.
 

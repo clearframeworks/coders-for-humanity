@@ -1,0 +1,12 @@
+# CODEOWNERS requests review; a provider ruleset must require that review.
+# No fictional team is assigned. Add consenting harness reviewers after appointment.
+* @clearframeworks
+/.github/ @clearframeworks
+/supabase/ @clearframeworks
+/app/*actions.ts @clearframeworks
+/app/auth/ @clearframeworks
+/lib/supabase/ @clearframeworks
+/proxy.ts @clearframeworks
+/next.config.ts @clearframeworks
+/vercel.json @clearframeworks
+/SECURITY.md @clearframeworks

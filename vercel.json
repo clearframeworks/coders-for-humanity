@@ -4,12 +4,12 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "env": {
-    "CFH_DEMO_MODE": "true",
+    "CFH_DEMO_MODE": "false",
     "NEXT_PUBLIC_SITE_URL": "https://cfh.retehost.com"
   },
   "build": {
     "env": {
-      "CFH_DEMO_MODE": "true",
+      "CFH_DEMO_MODE": "false",
       "NEXT_PUBLIC_SITE_URL": "https://cfh.retehost.com"
     }
   }

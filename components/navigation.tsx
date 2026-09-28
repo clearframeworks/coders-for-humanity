@@ -20,31 +20,36 @@ import {
   X,
   Search,
   ArrowRight,
+  MessagesSquare,
+  Users,
+  Inbox,
+  Github,
 } from "lucide-react";
 const groups = [
   {
-    label: "THE COLLECTIVE",
+    label: "THE COMMONS",
     items: [
-      ["Overview", "/", LayoutDashboard],
-      ["Programs", "/programs", Layers3],
+      ["Community", "/", LayoutDashboard],
+      ["Conversations", "/discussions", MessagesSquare],
       ["Projects", "/projects", FolderGit2],
-      ["Problem library", "/problems", Lightbulb],
+      ["People", "/people", Users],
     ],
   },
   {
-    label: "GET INVOLVED",
+    label: "YOUR WORK",
     items: [
+      ["My workspace", "/workspace", Layers3],
       ["Find work", "/contribute", ListTodo],
-      ["Impact", "/impact", ChartNoAxesCombined],
-      ["Documentation", "/docs", BookOpen],
+      ["Reviews", "/reviews", ShieldCheck],
+      ["Inbox", "/inbox", Inbox],
     ],
   },
   {
-    label: "THE INSTITUTION",
+    label: "SHARED RESPONSIBILITY",
     items: [
-      ["Our mission", "/mission", Landmark],
-      ["Governance", "/governance", ShieldCheck],
-      ["Transparency", "/transparency", HeartHandshake],
+      ["Harness team", "/harness", ShieldCheck],
+      ["Handbook", "/docs", BookOpen],
+      ["Programs", "/programs", Landmark],
     ],
   },
 ] as const;
@@ -83,7 +88,7 @@ export function Navigation() {
             height={135}
             priority
           />
-          <span>OPEN ENGINEERING. PUBLIC GOOD.</span>
+          <span>THE HUMAN COLLABORATION NETWORK</span>
         </Link>
         <nav aria-label="Main navigation">
           {groups.map((group) => (
@@ -115,17 +120,12 @@ export function Navigation() {
         <div className="sidebar-bottom">
           <ThemeSettings />
           <div className="open-mark">
-            <span />
-            Built in the open
+            <span />A place to build together
           </div>
-          <p>
-            Public purpose.
-            <br />
-            Shared responsibility.
-          </p>
-          <Link href="/constitution">
-            Read our constitution <ArrowUpRight size={14} />
-          </Link>
+          <a href="https://github.com/clearframeworks/coders-for-humanity">
+            <Github size={15} /> Our GitHub repository{" "}
+            <ArrowUpRight size={14} />
+          </a>
         </div>
       </aside>
     </>
@@ -135,8 +135,8 @@ export function Topbar() {
   return (
     <div className="topbar">
       <div className="institution-label">
-        <span className="small-cross">+</span> A public-interest engineering
-        institution
+        <span className="small-cross">⌘</span> Shared context. Human
+        contribution.
       </div>
       <div className="topbar-actions">
         <Link className="search-link" href="/search">
@@ -145,7 +145,7 @@ export function Topbar() {
           <kbd>/</kbd>
         </Link>
         <Link className="signin" href="/login">
-          Join the work <ArrowRight size={15} />
+          Sign in <ArrowRight size={15} />
         </Link>
       </div>
     </div>
