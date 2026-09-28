@@ -6,6 +6,8 @@ This source is the **public foundation**, not a demonstration catalogue. It cont
 
 The site uses the dedicated Vercel project `coders-for-humanity` and domain [cfh.retehost.com](https://cfh.retehost.com). A domain's existence does not establish which source revision is deployed. Consult the dated production release record in `docs/` for the verified deployment, source revision, checks, limitations, and rollback coordinate. This README does not certify that the current working tree has been released.
 
+The community workspace was deployed and verified on September 28, 2026: [release record](docs/community-release-20260928.md). All 12 browser acceptance tests passed against the public domain. Start the human handoff with [HUMAN-TAKEOVER.md](docs/HUMAN-TAKEOVER.md).
+
 ## What works in this source
 
 - Community and project rooms, a real founding backlog, contribution filters, project context, knowledge, and a harness charter.

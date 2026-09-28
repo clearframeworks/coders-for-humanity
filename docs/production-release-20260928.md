@@ -1,5 +1,7 @@
 # Production release — September 28, 2026 UTC
 
+Historical report: this demonstration release was superseded by the community workspace. See [community-release-20260928.md](community-release-20260928.md) for the new active deployment and verification.
+
 Owner authorization: “Push live. Cfh.retehost.com”.
 
 - Public URL: https://cfh.retehost.com
