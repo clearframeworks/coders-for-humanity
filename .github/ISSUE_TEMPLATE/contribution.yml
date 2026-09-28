@@ -1,0 +1,27 @@
+name: Contribution task
+description: Define a useful, reviewable piece of work.
+title: "[Work] "
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective and context
+      description: What needs to change, who benefits, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will a reviewer know the work is complete?
+    validations:
+      required: true
+  - type: input
+    id: skills
+    attributes:
+      label: Skills and estimated effort
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and evidence
+      description: Link relevant issues, research, or decisions. Do not include private information.

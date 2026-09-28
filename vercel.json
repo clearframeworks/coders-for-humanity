@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "installCommand": "npm ci",
+  "env": {
+    "CFH_DEMO_MODE": "true",
+    "NEXT_PUBLIC_SITE_URL": "https://cfh.retehost.com"
+  },
+  "build": {
+    "env": {
+      "CFH_DEMO_MODE": "true",
+      "NEXT_PUBLIC_SITE_URL": "https://cfh.retehost.com"
+    }
+  }
+}
