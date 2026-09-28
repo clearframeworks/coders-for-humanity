@@ -2,7 +2,7 @@
 
 ## Reporting
 
-Do not report vulnerabilities, credentials, or personal data in public issues. The repository is `clearframeworks/coders-for-humanity`. A staffed private reporting channel is not yet verified; contact a known repository owner privately before sending sensitive details. The owner must enable and verify private vulnerability reporting, appoint a security maintainer and publish response coverage. No unverified inbox or staffed team is claimed here.
+Do not report vulnerabilities, credentials, or personal data in public issues. Use [GitHub private vulnerability reporting](https://github.com/clearframeworks/coders-for-humanity/security/advisories/new), enabled and verified on September 28, 2026. The owner still needs to appoint a security maintainer and publish response coverage; enabling the private route does not establish a staffed response team.
 
 Include affected versions, safe reproduction steps, expected and observed behavior, potential impact, and relevant sanitized evidence. Do not access another person's information or test destructively. Agree disclosure timing with the security maintainer and document a repair and release plan.
 

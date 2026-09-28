@@ -4,9 +4,9 @@ GitHub is the canonical system for source, issues, pull requests, code review, a
 
 ## Current state
 
-The public repository [clearframeworks/coders-for-humanity](https://github.com/clearframeworks/coders-for-humanity) has been created for the platform. The source upload is still pending explicit approval: automatic approval review rejected the earlier combined operation to push the source publicly and connect production deployment automation. Repository existence must not be presented as proof that the source, workflows, or issues have been uploaded.
+The reviewed source is published in [clearframeworks/coders-for-humanity](https://github.com/clearframeworks/coders-for-humanity). The owner explicitly approved publication and the deployment connection on September 28, 2026. The initial published revision is `1f18d47e49bfd7897070fb507b804fd250cc8d0d`; GitHub run `36407475908` passed secret-scan, dependency-audit, and verify.
 
-No GitHub-to-Vercel deployment link was established. The scoped Vercel project and public domain already exist, but releases are owner-operated. Do not connect automatic production builds merely to make the repository appear integrated.
+The dedicated Vercel project `prj_K7Gr8c6SjKw4OtkJClmOcTNWpriB` is linked to GitHub repository ID `1391731736`, owned by `clearframeworks`, with `main` as the production branch. GitHub Discussions and private vulnerability reporting are enabled. No contributor workflow receives a Vercel token. Review staffing and hosting-role controls still need independent verification.
 
 ## Implemented public read adapter
 
@@ -18,7 +18,7 @@ Draft handoff links open GitHub's issue composer. The person still reviews the c
 
 ## Complete source publication deliberately
 
-The owner must choose whether to authorize public source upload or use a different visibility arrangement. If public publication is approved, review the exact source inventory, license, asset provenance, and secret scan, then push only the dedicated CFH repository. Do not include `.env.local`, provider exports, local credentials, or unrelated workspace files.
+Publication is approved and complete. For future contributions, review the exact source inventory, license, asset provenance, and secret scan. Do not include `.env.local`, provider exports, local credentials, or unrelated workspace files. Historical release records preserve the earlier pending state; they do not revoke the later approval.
 
 Configure protected-branch and review settings separately from source publication. Verify them using a failing pull request, a stale approval, a self-review attempt, and a contributor identity lacking release permissions. CI definitions and CODEOWNERS do not enforce provider rules by themselves. Keep production credentials out of contributor workflows. See [harness-team.md](harness-team.md).
 

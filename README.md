@@ -37,8 +37,8 @@ Open [localhost:3100](http://localhost:3100). Production mode is `npm run build`
 
 | Boundary | Current state |
 | --- | --- |
-| Source repository | Public repository `clearframeworks/coders-for-humanity` exists. Source upload awaits explicit approval after automatic approval review rejected the earlier combined public push and deployment-link operation. Do not infer that the repository contains this source. |
-| Git-triggered deployments | No repository-to-Vercel deployment link was established. Production remains an owner-operated release. |
+| Source repository | The reviewed source is published in `clearframeworks/coders-for-humanity` after the owner's explicit approval on September 28, 2026. The first GitHub CI run passed all three jobs. |
+| Git-triggered deployments | The dedicated CFH Vercel project is connected to this repository, with `main` as its production branch. Merge and release permissions remain separate from community membership. |
 | Supabase | Three migrations and protected actions are implemented and tested locally. No dedicated hosted CFH Supabase project has been provisioned. Organization selection and provisioning cost approval remain pending. |
 | Authentication | GitHub/email sign-in requires provider configuration and real-session verification. It is not operational merely because the UI or SQL exists. |
 | Harness team | Roles and work briefs are defined. Independent reviewers and release stewards have not been appointed; provider-enforced gates have not been verified. |

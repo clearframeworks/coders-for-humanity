@@ -7,7 +7,7 @@ This document describes the source handoff. Use the dated production release rec
 ## Start here
 
 - **Public site:** [cfh.retehost.com](https://cfh.retehost.com).
-- **Dedicated source destination:** [clearframeworks/coders-for-humanity](https://github.com/clearframeworks/coders-for-humanity). The repository exists, but source upload awaits explicit approval.
+- **Dedicated source repository:** [clearframeworks/coders-for-humanity](https://github.com/clearframeworks/coders-for-humanity). Source is published and the dedicated CFH Vercel project is connected to its `main` branch following explicit owner approval.
 - **Owner account:** `clearframeworks`. This identifies the repository owner, not an appointed multi-person security team.
 - **Founding project:** `community-platform`, UUID `cf000000-0000-4000-8000-000000000001`.
 - **Source of work briefs:** `lib/harness.ts`; matching database records are in the third migration.
@@ -19,12 +19,12 @@ Account infrastructure has not been provisioned. Shared posts, member records, a
 
 ## Decisions required from the owner
 
-1. **Source publication:** explicitly approve uploading the CFH source to the public repository, or choose another visibility arrangement. The earlier public push and deployment-link operation was rejected by automatic approval review; it was not executed. Publication and automatic production deployment are separate decisions.
+1. **Source publication — completed:** the owner explicitly approved publication and the CFH deployment connection on September 28, 2026. Source is public and the first GitHub CI run passed. The earlier rejection no longer blocks these approved operations.
 2. **Database organization and cost:** choose the Supabase organization for a dedicated CFH project, inspect the provisioning quote, and approve the cost before creation. Do not borrow an unrelated application's database.
 3. **Independent people:** appoint a project maintainer, a harness/security reviewer, and a release steward who have consented to their responsibilities. Establish a private vulnerability-reporting route and conduct coverage. The current role definitions are unstaffed.
 4. **Operating scope:** agree the first project's membership and pilot participants, what counts as accepted work, and who can approve provider configuration or release changes.
 
-A standing instruction to build or deploy does not supply a Supabase organization/cost choice or overturn a recorded approval-review rejection. These unresolved decisions are not reasons to fabricate operational services.
+The explicit publication approval does not supply a Supabase organization/cost choice or appoint independent human reviewers. Those decisions remain outstanding.
 
 ## First operating sequence
 
