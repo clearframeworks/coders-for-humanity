@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient, isDemo, configured } from "@/lib/supabase";
-import { safeNext } from "@/lib/filters";
+import { callbackFailurePath, safeNext } from "@/lib/filters";
 export async function GET(request: NextRequest) {
   const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL || request.url)
     .origin;
@@ -13,5 +13,10 @@ export async function GET(request: NextRequest) {
         new URL(safeNext(request.nextUrl.searchParams.get("next")), origin),
       );
   }
-  return NextResponse.redirect(new URL("/login?error=callback", origin));
+  return NextResponse.redirect(
+    new URL(
+      callbackFailurePath(request.nextUrl.searchParams.get("next")),
+      origin,
+    ),
+  );
 }

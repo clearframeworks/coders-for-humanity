@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { filterTasks, safeNext } from "../lib/filters";
+import { callbackFailurePath, filterTasks, safeNext } from "../lib/filters";
 import { demoCatalog } from "../lib/demo";
 import { searchCatalog } from "../lib/search";
 import { proposalSchema, profileSchema } from "../lib/validation";
@@ -36,6 +36,16 @@ test("external, protocol-relative, and backslash auth redirects are rejected", (
   ])
     assert.equal(safeNext(value), "/account");
   assert.equal(safeNext("/work?id=1"), "/work?id=1");
+});
+test("failed auth callbacks preserve safe destinations for retry", () => {
+  assert.equal(
+    callbackFailurePath("/join?source=header"),
+    "/login?error=callback&next=%2Fjoin%3Fsource%3Dheader",
+  );
+  assert.equal(
+    callbackFailurePath("https://evil.test"),
+    "/login?error=callback&next=%2Faccount",
+  );
 });
 test("every demonstration project and task is labelled and linked", () => {
   assert.ok(demoCatalog.projects.every((p) => p.is_demo));

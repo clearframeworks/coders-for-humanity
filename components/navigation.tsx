@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ThemeSettings } from "./theme-settings";
 import {
   ArrowUpRight,
@@ -139,6 +139,32 @@ export function Navigation() {
   );
 }
 export function Topbar() {
+  const router = useRouter();
+  useEffect(() => {
+    function searchShortcut(event: KeyboardEvent) {
+      const target = event.target;
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.altKey ||
+        (target instanceof HTMLElement &&
+          (target.isContentEditable ||
+            target.closest("input, textarea, select, [role='textbox']")))
+      )
+        return;
+      if (
+        (event.key === "/" && !event.ctrlKey && !event.metaKey) ||
+        (event.key.toLowerCase() === "k" && (event.ctrlKey || event.metaKey))
+      ) {
+        event.preventDefault();
+        if (window.location.pathname === "/search")
+          document.getElementById("global-q")?.focus();
+        else router.push("/search");
+      }
+    }
+    window.addEventListener("keydown", searchShortcut);
+    return () => window.removeEventListener("keydown", searchShortcut);
+  }, [router]);
   return (
     <div className="topbar">
       <div className="institution-label">
@@ -146,7 +172,11 @@ export function Topbar() {
         contribution.
       </div>
       <div className="topbar-actions">
-        <Link className="search-link" href="/search">
+        <Link
+          className="search-link"
+          href="/search"
+          aria-keyshortcuts="/ Control+k Meta+k"
+        >
           <Search size={17} />
           <span>Search</span>
           <kbd>/</kbd>

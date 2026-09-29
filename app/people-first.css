@@ -493,6 +493,39 @@
   margin-bottom: 24px;
   font-size: 12px;
 }
+.repository-review-queue {
+  margin-bottom: 28px;
+}
+.repository-review-list {
+  display: grid;
+  gap: 0;
+  margin: 22px 0;
+}
+.repository-review-item {
+  border-top: 1px solid var(--line);
+  padding: 22px 0;
+  min-width: 0;
+}
+.repository-review-item:last-child {
+  padding-bottom: 0;
+}
+.repository-review-item h3 {
+  font-size: 20px;
+  line-height: 1.4;
+  margin: 12px 0 18px;
+  overflow-wrap: anywhere;
+}
+.repository-review-item h3 a:hover {
+  color: var(--green);
+}
+.repository-review-actions {
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.repository-empty {
+  border-top: 1px solid var(--line);
+  padding: 20px 0;
+}
 @media (max-width: 1100px) {
   .join-layout {
     gap: 22px;

@@ -89,8 +89,8 @@ export default async function TaskPage({
               >
                 Draft an introduction
               </Link>
-              <Link className="button" href="/workspace">
-                Write a handoff
+              <Link className="button" href={`/workspace?task=${t.id}`}>
+                Plan this task
               </Link>
               <Link className="text-link" href="/harness">
                 Review the gates ↗

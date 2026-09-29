@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { humanWork } from "@/lib/harness";
 
 const storageKey = "cfh-handoff-notebook:v1";
 const fields = [
@@ -89,12 +91,17 @@ function markdown(note: Handoff) {
   return `# ${note.title}\n\nPersonal handoff draft — not submitted or approved.\n\n${fields.map((f) => `## ${f.label}\n\n${note[f.key].trim() || "Not recorded yet."}`).join("\n\n")}\n\n---\nPrepared in Coders for Humanity. Task acceptance does not authorize deployment.\n`;
 }
 
-export function WorkspaceNotebook() {
+export function WorkspaceNotebook({
+  initialTaskId,
+}: {
+  initialTaskId?: string;
+}) {
   const [notes, setNotes] = useState<Handoff[]>([]);
   const [draft, setDraft] = useState<Handoff>(emptyNote);
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
+  const [selectedTaskId, setSelectedTaskId] = useState(initialTaskId ?? "");
   useEffect(() => {
     try {
       setNotes(readNotes(localStorage.getItem(storageKey)));
@@ -105,6 +112,9 @@ export function WorkspaceNotebook() {
     }
     setReady(true);
   }, []);
+  useEffect(() => {
+    setSelectedTaskId(initialTaskId ?? "");
+  }, [initialTaskId]);
   function persist(next: Handoff[]) {
     try {
       if (next.length)
@@ -126,6 +136,38 @@ export function WorkspaceNotebook() {
     setDraft((current) => ({ ...current, [key]: value }));
     setDirty(true);
     setMessage("");
+  }
+  function loadTaskPlan() {
+    const task = humanWork.find((item) => item.id === selectedTaskId);
+    if (!task) return;
+    const hasDraftContent = Object.values(draft).some(
+      (value) => value.trim().length > 0,
+    );
+    if (
+      hasDraftContent &&
+      !window.confirm(
+        "Replace the current handoff fields with this task plan? Save or export the current draft first if you want to keep it.",
+      )
+    ) {
+      setMessage("Current handoff kept. The task plan was not loaded.");
+      return;
+    }
+    setDraft({
+      ...emptyNote,
+      title: `Task: ${task.title}`,
+      context: [
+        `Task brief: https://cfh.retehost.com/work/${task.id}`,
+        `Objective: ${task.objective}`,
+        `Current context: ${task.context}`,
+        `Acceptance criteria: ${task.acceptance}`,
+        `Dependencies: ${task.dependencies}`,
+      ].join("\n\n"),
+      reviewer: task.reviewer,
+    });
+    setDirty(true);
+    setMessage(
+      "Task plan loaded into an editable draft. Save it on this device or export it to keep a copy.",
+    );
   }
   function download() {
     const url = URL.createObjectURL(
@@ -157,6 +199,42 @@ export function WorkspaceNotebook() {
         copy before clearing browser data. Keep credentials and private
         information out.
       </p>
+      <div className="form-shell">
+        <div className="field">
+          <label htmlFor="handoff-task">Start from a founding task</label>
+          <select
+            id="handoff-task"
+            value={selectedTaskId}
+            onChange={(event) => setSelectedTaskId(event.target.value)}
+          >
+            <option value="">Choose a real task to plan around</option>
+            {humanWork.map((task) => (
+              <option key={task.id} value={task.id}>
+                {task.title} · {task.effort}
+              </option>
+            ))}
+          </select>
+          <p className="form-help">
+            Loads the task’s published scope and reviewer role into an editable
+            personal handoff. It does not claim the task or contact anyone.
+          </p>
+        </div>
+        <div className="form-actions">
+          <button
+            className="button"
+            type="button"
+            disabled={!selectedTaskId}
+            onClick={loadTaskPlan}
+          >
+            Load task plan
+          </button>
+          {selectedTaskId && (
+            <Link className="text-link" href={`/work/${selectedTaskId}`}>
+              Open task context →
+            </Link>
+          )}
+        </div>
+      </div>
       {notes.length > 0 && (
         <div className="hub-stack" aria-label="Saved handoffs">
           {notes.map((note) => (

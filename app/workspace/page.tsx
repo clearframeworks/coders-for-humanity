@@ -5,6 +5,7 @@ import { CommunityConnectionNote } from "@/components/community-feed";
 import { communityReady, getViewer } from "@/lib/community";
 import { createClient } from "@/lib/supabase";
 import { WorkspaceNotebook } from "@/components/workspace-notebook";
+import { humanWork } from "@/lib/harness";
 export const metadata = { title: "My workspace" };
 type Assigned = {
   task_id: string;
@@ -23,7 +24,17 @@ type Saved = {
   post_id: string;
   community_posts: { id: string; title: string; body: string } | null;
 };
-export default async function Workspace() {
+export default async function Workspace({
+  searchParams,
+}: {
+  searchParams?: Promise<{ task?: string | string[] }>;
+}) {
+  const taskParam = (await searchParams)?.task;
+  const initialTaskId =
+    typeof taskParam === "string" &&
+    humanWork.some((task) => task.id === taskParam)
+      ? taskParam
+      : undefined;
   const viewer = await getViewer();
   if (!viewer)
     return (
@@ -39,7 +50,7 @@ export default async function Workspace() {
             projects and assigned work.
           </div>
         )}
-        <WorkspaceNotebook />
+        <WorkspaceNotebook initialTaskId={initialTaskId} />
         <div className="hub-grid">
           <section className="hub-panel">
             <span className="eyebrow">01 / FIND YOUR PLACE</span>
@@ -132,7 +143,7 @@ export default async function Workspace() {
           Review queue
         </Link>
       </div>
-      <WorkspaceNotebook />
+      <WorkspaceNotebook initialTaskId={initialTaskId} />
       <section className="hub-stack">
         <h2>My commitments</h2>
         {tasks.length ? (
