@@ -2,6 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { humanWork } from "@/lib/harness";
+import {
+  handoffDraftStorageKey,
+  readHandoffDraft,
+  serializeHandoffDraft,
+} from "@/lib/handoff-draft";
 
 const storageKey = "cfh-handoff-notebook:v1";
 const fields = [
@@ -101,13 +106,51 @@ export function WorkspaceNotebook({
   const [ready, setReady] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [message, setMessage] = useState("");
+  const [recoveryStatus, setRecoveryStatus] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState(initialTaskId ?? "");
   useEffect(() => {
+    let savedNotes: Handoff[] = [];
+    let notebookAvailable = false;
     try {
-      setNotes(readNotes(localStorage.getItem(storageKey)));
+      savedNotes = readNotes(localStorage.getItem(storageKey));
+      setNotes(savedNotes);
+      notebookAvailable = true;
     } catch {
       setMessage(
         "Saved notes could not be read. You can still write and export a handoff.",
+      );
+    }
+    try {
+      const rawDraft = localStorage.getItem(handoffDraftStorageKey);
+      const recovered = readHandoffDraft(
+        rawDraft,
+        notebookAvailable
+          ? new Set(savedNotes.map((note) => note.id))
+          : undefined,
+      );
+      if (recovered) {
+        if (recovered.id && !notebookAvailable) {
+          setRecoveryStatus(
+            "A recovery edit for a saved note remains in browser storage, but saved notes could not be read to check it. It was kept in storage and not restored.",
+          );
+        } else {
+          setDraft(recovered);
+          setDirty(true);
+          setRecoveryStatus(
+            "An unfinished handoff was recovered from this browser. Save or export it to keep a copy.",
+          );
+        }
+      } else if (rawDraft) {
+        // Invalid drafts and edits for deleted notes must not linger to be
+        // mistaken for recoverable work later.
+        localStorage.removeItem(handoffDraftStorageKey);
+        setRecoveryStatus(
+          "A saved recovery draft was invalid or belonged to a deleted note, so it was discarded.",
+        );
+      }
+    } catch {
+      setRecoveryStatus(
+        "Recovery storage could not be read. This draft may not survive leaving this page.",
       );
     }
     setReady(true);
@@ -127,15 +170,56 @@ export function WorkspaceNotebook({
       return true;
     } catch {
       setMessage(
-        "Browser storage is unavailable or full. Export your handoff to keep a copy.",
+        "The saved notebook could not be updated. The current fields remain in the editor; browser recovery may contain an earlier copy. Export the latest fields before leaving this page.",
       );
       return false;
     }
   }
+  function persistRecovery(next: Handoff) {
+    try {
+      const serialized = serializeHandoffDraft(next);
+      if (!serialized) {
+        setRecoveryStatus(
+          "This version is too large to keep as a recovery draft. An earlier copy may still be restored; export the current fields before leaving this page.",
+        );
+        return false;
+      }
+      localStorage.setItem(handoffDraftStorageKey, serialized);
+      setRecoveryStatus(
+        "Unfinished changes are being recovered on this device.",
+      );
+      return true;
+    } catch {
+      setRecoveryStatus(
+        "The latest edit could not be written to browser recovery storage. An earlier copy may still be restored; export the current fields before leaving this page.",
+      );
+      return false;
+    }
+  }
+  function clearRecovery() {
+    try {
+      localStorage.removeItem(handoffDraftStorageKey);
+      setRecoveryStatus("");
+      return true;
+    } catch {
+      setRecoveryStatus(
+        "The recovery copy could not be cleared from browser storage. It will be checked against saved notes before it can be restored.",
+      );
+      return false;
+    }
+  }
+  function confirmReplaceDraft() {
+    if (!dirty) return true;
+    return window.confirm(
+      "Replace the unfinished handoff in the editor? Its recovery copy will no longer be available here. Save or export it first if you want to keep it.",
+    );
+  }
   function edit(key: keyof Handoff, value: string) {
-    setDraft((current) => ({ ...current, [key]: value }));
+    const next = { ...draft, [key]: value };
+    setDraft(next);
     setDirty(true);
     setMessage("");
+    if (ready) persistRecovery(next);
   }
   function loadTaskPlan() {
     const task = humanWork.find((item) => item.id === selectedTaskId);
@@ -152,7 +236,13 @@ export function WorkspaceNotebook({
       setMessage("Current handoff kept. The task plan was not loaded.");
       return;
     }
-    setDraft({
+    if (!clearRecovery()) {
+      setMessage(
+        "The task plan was not loaded because the current recovery copy could not be cleared.",
+      );
+      return;
+    }
+    const taskDraft = {
       ...emptyNote,
       title: `Task: ${task.title}`,
       context: [
@@ -163,10 +253,14 @@ export function WorkspaceNotebook({
         `Dependencies: ${task.dependencies}`,
       ].join("\n\n"),
       reviewer: task.reviewer,
-    });
+    };
+    setDraft(taskDraft);
     setDirty(true);
+    const recovered = persistRecovery(taskDraft);
     setMessage(
-      "Task plan loaded into an editable draft. Save it on this device or export it to keep a copy.",
+      recovered
+        ? "Task plan loaded into an editable draft. Save it on this device or export it to keep a copy."
+        : "Task plan loaded, but browser recovery could not be updated. Export it before leaving this page.",
     );
   }
   function download() {
@@ -250,6 +344,18 @@ export function WorkspaceNotebook({
                 type="button"
                 aria-label={`Edit ${note.title}`}
                 onClick={() => {
+                  if (dirty && !confirmReplaceDraft()) {
+                    setMessage(
+                      "Current handoff kept. The saved note was not opened.",
+                    );
+                    return;
+                  }
+                  if (!clearRecovery()) {
+                    setMessage(
+                      "The saved note was not opened because the current recovery copy could not be cleared.",
+                    );
+                    return;
+                  }
                   setDraft(note);
                   setDirty(false);
                   setMessage(`Editing “${note.title}”.`);
@@ -262,12 +368,20 @@ export function WorkspaceNotebook({
                 type="button"
                 aria-label={`Delete ${note.title}`}
                 onClick={() => {
+                  if (draft.id === note.id && dirty && !confirmReplaceDraft())
+                    return;
                   if (persist(notes.filter((n) => n.id !== note.id))) {
                     if (draft.id === note.id) {
                       setDraft(emptyNote);
                       setDirty(false);
                     }
-                    setMessage("Handoff deleted from this browser.");
+                    const recoveryCleared =
+                      draft.id !== note.id || clearRecovery();
+                    setMessage(
+                      recoveryCleared
+                        ? "Handoff deleted from this browser."
+                        : "Handoff deleted. Its recovery copy could not be cleared, and will be rejected because the saved note no longer exists.",
+                    );
                   }
                 }}
               >
@@ -298,8 +412,11 @@ export function WorkspaceNotebook({
           if (persist(next)) {
             setDraft(note);
             setDirty(false);
+            const recoveryCleared = clearRecovery();
             setMessage(
-              "Handoff saved on this device. Nothing has been published.",
+              recoveryCleared
+                ? "Handoff saved on this device. Nothing has been published."
+                : "Handoff saved on this device, but its recovery copy could not be cleared. Nothing has been published.",
             );
           }
         }}
@@ -344,6 +461,16 @@ export function WorkspaceNotebook({
             className="button"
             type="button"
             onClick={() => {
+              if (!confirmReplaceDraft()) {
+                setMessage("Current handoff kept. No new handoff was opened.");
+                return;
+              }
+              if (!clearRecovery()) {
+                setMessage(
+                  "No new handoff was opened because the current recovery copy could not be cleared.",
+                );
+                return;
+              }
               setDraft(emptyNote);
               setDirty(false);
               setMessage(
@@ -359,6 +486,12 @@ export function WorkspaceNotebook({
             disabled={!ready}
             onClick={() => {
               if (persist([])) {
+                if (!clearRecovery()) {
+                  setMessage(
+                    "Saved notes were cleared, but browser storage could not clear the recovery draft. It may return when this page reloads.",
+                  );
+                  return;
+                }
                 setDraft(emptyNote);
                 setDirty(false);
                 setMessage("Notebook cleared from this browser.");
@@ -368,12 +501,17 @@ export function WorkspaceNotebook({
             Clear notebook
           </button>
         </div>
-        <p className="form-help" role="status">
+        <p className="form-help" role="status" aria-live="polite">
           {message ||
             (dirty
-              ? "Unsaved changes — save on this device or export before leaving."
+              ? "Unfinished changes — save on this device or export before leaving."
               : "Saving a handoff does not claim a task, submit a review, or authorize deployment.")}
         </p>
+        {recoveryStatus && (
+          <p className="form-help" role="status" aria-live="polite">
+            {recoveryStatus}
+          </p>
+        )}
       </form>
     </section>
   );

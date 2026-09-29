@@ -3,8 +3,15 @@ import { ArrowUpRight } from "lucide-react";
 import type { Catalog, Task } from "@/lib/types";
 import { disciplines, levels, efforts, taskStatuses } from "@/lib/types";
 import { filterTasks, type Filters } from "@/lib/filters";
+import {
+  normalizeWorkBoardParams,
+  type WorkBoardParams,
+  type NormalizedWorkBoardParams,
+  WORK_SEARCH_MAX_LENGTH,
+} from "@/lib/work-board-filters";
+import "@/app/work-discovery.css";
 import { Badge, EmptyState } from "./ui";
-type Params = Record<string, string | undefined>;
+type Params = WorkBoardParams;
 export function TaskRow({ task, catalog }: { task: Task; catalog: Catalog }) {
   return (
     <Link className="task-row" href={`/work/${task.id}`}>
@@ -31,11 +38,22 @@ export function WorkBoard({
   params: Params;
   path?: string;
 }) {
-  const filtered = filterTasks(catalog.tasks, params as Filters, catalog);
+  const normalized = normalizeWorkBoardParams(params, catalog);
+  const filters: Filters = {
+    q: normalized.q,
+    discipline: normalized.discipline,
+    level: normalized.level,
+    effort: normalized.effort,
+    project: normalized.project,
+    program: normalized.program,
+    technology: normalized.technology,
+    status: normalized.status,
+  };
+  const filtered = filterTasks(catalog.tasks, filters, catalog);
   const view = ["List", "Kanban", "Project", "Program", "Discipline"].includes(
-    params.view || "",
+    normalized.view || "",
   )
-    ? params.view!
+    ? normalized.view!
     : "List";
   const choices = [
     ["discipline", "Discipline", disciplines.map((x) => [x, x])],
@@ -54,15 +72,58 @@ export function WorkBoard({
     ],
     ["status", "Status", taskStatuses.map((x) => [x, x])],
   ] as [string, string, string[][]][];
-  const viewHref = (next: string) => {
+  const hrefFor = (next: NormalizedWorkBoardParams) => {
     const q = new URLSearchParams(
-      Object.entries(params).filter(([, v]) => Boolean(v)) as [
+      Object.entries(next).filter(([, value]) => Boolean(value)) as [
         string,
         string,
       ][],
     );
-    q.set("view", next);
-    return `${path}?${q}`;
+    const query = q.toString();
+    return query ? `${path}?${query}` : path;
+  };
+  const viewHref = (next: string) => hrefFor({ ...normalized, view: next });
+  const quickFilters = [
+    { key: "level", value: "First Contribution", label: "First contribution" },
+    { key: "discipline", value: "Documentation", label: "Documentation" },
+    { key: "discipline", value: "Security", label: "Security" },
+  ].filter((quick) =>
+    catalog.tasks.some((task) =>
+      quick.key === "level"
+        ? task.level === quick.value
+        : task.discipline === quick.value,
+    ),
+  );
+  const quickHref = (key: "level" | "discipline", value: string) => {
+    const next = { ...normalized };
+    if (next[key] === value) delete next[key];
+    else next[key] = value;
+    return hrefFor(next);
+  };
+  const filterLabels: Record<string, string> = {
+    q: "Search",
+    discipline: "Discipline",
+    level: "Skill level",
+    effort: "Commitment",
+    project: "Project",
+    program: "Program / impact area",
+    technology: "Technology",
+    status: "Status",
+  };
+  const displayValue = (key: string, value: string) => {
+    if (key === "project")
+      return catalog.projects.find((item) => item.id === value)?.name || value;
+    if (key === "program")
+      return catalog.programs.find((item) => item.id === value)?.name || value;
+    return value;
+  };
+  const activeFilters = Object.entries(filters).filter(([, value]) =>
+    Boolean(value),
+  ) as [keyof Filters, string][];
+  const withoutFilter = (key: keyof Filters) => {
+    const next = { ...normalized };
+    delete next[key];
+    return hrefFor(next);
   };
   const groupName = (t: Task) =>
     view === "Project"
@@ -76,21 +137,29 @@ export function WorkBoard({
         : t.discipline;
   return (
     <>
-      <form className="filters" action={path}>
+      <form className="filters" action={path} key={JSON.stringify(normalized)}>
         <input type="hidden" name="view" value={view} />
         <div className="field search-field">
           <label htmlFor="q">Find a useful contribution</label>
           <input
             name="q"
             id="q"
-            defaultValue={params.q}
+            type="search"
+            maxLength={WORK_SEARCH_MAX_LENGTH}
+            defaultValue={normalized.q}
             placeholder="Search tasks, skills, or technologies…"
           />
         </div>
         {choices.map(([key, label, options]) => (
           <div className="field" key={key}>
             <label htmlFor={key}>{label}</label>
-            <select name={key} id={key} defaultValue={params[key] || ""}>
+            <select
+              name={key}
+              id={key}
+              defaultValue={
+                normalized[key as keyof NormalizedWorkBoardParams] || ""
+              }
+            >
               <option value="">All {label.toLowerCase()}</option>
               {options.map(([value, name]) => (
                 <option key={value} value={value}>
@@ -109,6 +178,47 @@ export function WorkBoard({
           </Link>
         </div>
       </form>
+      {quickFilters.length > 0 && (
+        <nav className="work-quick-filters" aria-label="Quick task filters">
+          <span>Explore</span>
+          {quickFilters.map((quick) => {
+            const key = quick.key as "level" | "discipline";
+            const selected = normalized[key] === quick.value;
+            return (
+              <Link
+                key={`${key}-${quick.value}`}
+                href={quickHref(key, quick.value)}
+                className={selected ? "selected" : ""}
+                aria-current={selected ? "page" : undefined}
+              >
+                {quick.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+      {activeFilters.length > 0 && (
+        <div className="work-applied-filters" aria-label="Applied filters">
+          <span className="work-applied-label">Applied</span>
+          {activeFilters.map(([key, value]) => {
+            const label = `${filterLabels[key]}: ${displayValue(key, value)}`;
+            return (
+              <Link
+                key={key}
+                href={withoutFilter(key)}
+                className="work-filter-chip"
+                aria-label={`Remove ${label} filter`}
+              >
+                <span className="work-filter-chip-label">{label}</span>
+                <span aria-hidden="true">×</span>
+              </Link>
+            );
+          })}
+          <Link className="work-clear-filters" href={path}>
+            Clear all
+          </Link>
+        </div>
+      )}
       <div className="page-toolbar">
         <p aria-live="polite">
           {filtered.length} {catalog.demo ? "example " : ""}

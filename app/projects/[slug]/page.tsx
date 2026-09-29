@@ -50,6 +50,11 @@ export default async function ProjectPage({
         {p.summary}
       </PageIntro>
       {p.is_demo && <DemoNote />}
+      <p>
+        <a className="button" href={`/projects/${p.slug}/brief`} download>
+          Download project brief (.md)
+        </a>
+      </p>
       <dl className="metadata-grid">
         <div>
           <dt>Current stage</dt>

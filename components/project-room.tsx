@@ -164,6 +164,14 @@ export async function ProjectRoom({
                   changed it. A chat thread should never be the only place a
                   decision exists.
                 </p>
+                <a className="button" href={`${root}/brief`} download>
+                  Download project brief (.md)
+                </a>
+                <p className="form-help">
+                  Take the goal, task briefs, acceptance criteria, and review
+                  requirements with you. The download contains public project
+                  context.
+                </p>
                 <div className="brief-steps">
                   <Link href="/docs/contributor-guide">
                     <span>01</span>
@@ -316,6 +324,9 @@ export async function ProjectRoom({
             </a>
             <a className="button" href={repositoryUrl}>
               Open GitHub ↗
+            </a>
+            <a className="button" href={`${root}/brief`} download>
+              Download project brief
             </a>
           </section>
           <section className="hub-panel">
