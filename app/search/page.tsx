@@ -24,6 +24,7 @@ export default async function Search({
           <label htmlFor="global-q">Search public information</label>
           <input
             id="global-q"
+            autoFocus
             name="q"
             defaultValue={q}
             placeholder="Try accessibility, food, or research"

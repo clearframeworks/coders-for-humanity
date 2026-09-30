@@ -14,8 +14,8 @@ export default async function Account() {
           title="A record of useful work."
         />
         <EmptyState title="Member accounts are not connected yet">
-          You can browse the public catalogue and save a proposal draft in your
-          browser. <Link href="/contribute">Explore the founding tasks.</Link>
+          Start your profile and save it in this browser while registration is
+          being connected. <Link href="/join">Create your profile →</Link>
         </EmptyState>
       </div>
     );

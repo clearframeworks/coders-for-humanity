@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Navigation, Topbar } from "@/components/navigation";
 import "./globals.css";
 import "./hub.css";
+import "./people-first.css";
 export const metadata: Metadata = {
   title: {
     default: "Coders for Humanity — Community workspace",
@@ -47,6 +48,7 @@ export default function RootLayout({
               <Link href="/partners">Partners</Link>
               <Link href="/about">About</Link>
               <Link href="/docs/security">Security</Link>
+              <Link href="/photo-credits">Photo credits</Link>
             </div>
             <span>Open source · MIT</span>
           </footer>

@@ -36,8 +36,8 @@ export default async function People({
           />
         </div>
         <button className="button">Search</button>
-        <Link className="button primary" href="/account">
-          Set up your profile
+        <Link className="button primary" href="/join">
+          Create profile
         </Link>
       </form>
       {people.length ? (

@@ -116,6 +116,7 @@ export async function saveProfile(payload: unknown): Promise<ActionState> {
       };
     revalidatePath("/account");
     revalidatePath(`/people/${data.username}`);
+    revalidatePath("/people");
     return { message: "Profile saved." };
   } catch (e) {
     return { error: message(e) };
@@ -126,7 +127,10 @@ export async function signIn(
   form: FormData,
 ): Promise<ActionState> {
   if (isDemo() || !configured())
-    return { error: "Account access is not connected in this demonstration." };
+    return {
+      error:
+        "Member accounts are not connected yet. Your draft has not been published.",
+    };
   let destination: string | undefined;
   try {
     await checkOrigin();
@@ -147,7 +151,10 @@ export async function signIn(
         return { error: "Enter a valid email address." };
       const { error } = await db.auth.signInWithOtp({
         email,
-        options: { emailRedirectTo: callback },
+        options: {
+          emailRedirectTo: callback,
+          shouldCreateUser: form.get("intent") === "signup",
+        },
       });
       if (error)
         return {

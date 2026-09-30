@@ -39,3 +39,7 @@ export function safeNext(value: string | null | undefined) {
     ? value
     : "/account";
 }
+
+export function callbackFailurePath(next: string | null | undefined) {
+  return `/login?error=callback&next=${encodeURIComponent(safeNext(next))}`;
+}

@@ -4,6 +4,8 @@ import { WorkReview } from "@/components/work-review";
 import { CommunityConnectionNote } from "@/components/community-feed";
 import { communityReady, getViewer } from "@/lib/community";
 import { createClient } from "@/lib/supabase";
+import { getGitHub } from "@/lib/github";
+import { GitHubReviewQueue } from "@/components/github-review-queue";
 
 export const metadata = { title: "Independent reviews" };
 type ReviewTask = {
@@ -18,7 +20,7 @@ type ReviewTask = {
 };
 
 export default async function ReviewsPage() {
-  const viewer = await getViewer();
+  const [viewer, github] = await Promise.all([getViewer(), getGitHub()]);
   const heading = (
     <PageIntro
       eyebrow="INDEPENDENT REVIEW"
@@ -32,6 +34,7 @@ export default async function ReviewsPage() {
     return (
       <div className="page-content">
         {heading}
+        <GitHubReviewQueue github={github} />
         {communityReady() ? (
           <div className="notice">
             <Link href="/login?next=/reviews">Sign in</Link> to see work
@@ -67,6 +70,7 @@ export default async function ReviewsPage() {
     return (
       <div className="page-content">
         {heading}
+        <GitHubReviewQueue github={github} />
         <section className="hub-panel">
           <h2>No maintainer responsibilities yet.</h2>
           <p>
@@ -110,6 +114,7 @@ export default async function ReviewsPage() {
   return (
     <div className="page-content">
       {heading}
+      <GitHubReviewQueue github={github} />
       <div className="notice">
         Only submissions in projects you maintain appear here. Your own assigned
         work is excluded. Task approval does not authorize a production release.

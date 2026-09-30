@@ -8,6 +8,11 @@ The platform has review policy, source-level access controls, local database tes
 
 ## Authority
 
+The owner's September 29, 2026 instruction takes precedence over human-review
+requirements below: the owner has final release authority and does not need a
+second person's permission. Everyone else requires owner approval or explicit
+delegation. Automated checks remain mandatory. See [Owner authority](owner-authority.md).
+
 | Role | May do | Must not do |
 | --- | --- | --- |
 | Community member | Discuss, propose, ask for help and join a published project | Grant roles or acquire secrets |
@@ -15,7 +20,7 @@ The platform has review policy, source-level access controls, local database tes
 | Project maintainer | Review scope, behavior, tests and handoff | Treat task completion as deployment authorization |
 | Harness reviewer | Review threats, dependencies, data access and infrastructure changes | Approve changes they authored |
 | Release steward | Approve reviewed commit and preview, record rollback, verify release | Substitute build success for independent review |
-| Repository owner | Appoint consenting reviewers and configure provider enforcement | Claim independence when only one person reviewed |
+| Repository owner | Make final release decisions, approve their own candidate, appoint consenting reviewers and configure enforcement | Claim independence when only one person reviewed |
 
 The target policy uses distinct contributor, maintainer reviewer, security reviewer and release steward identities. Until the independent team exists, releases remain explicitly owner-operated and must record that staffing limitation. Do not fabricate approvals to satisfy the policy. Every code change receives security triage; changes to authentication, permissions, data, dependencies, workflows or release infrastructure require specialist review.
 

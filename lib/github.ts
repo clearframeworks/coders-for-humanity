@@ -13,6 +13,7 @@ export type GitHubIssue = {
   user: { login: string; html_url: string };
   labels: { name: string }[];
   pull_request?: { url: string };
+  draft?: boolean;
   body: string | null;
 };
 export type GitHubCommit = {

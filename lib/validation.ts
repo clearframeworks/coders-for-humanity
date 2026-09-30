@@ -33,7 +33,10 @@ export const profileSchema = z.object({
     z.literal(""),
     z.string().regex(/^https:\/\/github.com\/[A-Za-z0-9-]+\/?$/),
   ]),
-  website_url: z.union([z.literal(""), z.url().startsWith("https://")]),
+  website_url: z.union([
+    z.literal(""),
+    z.url().startsWith("https://").max(2000),
+  ]),
   is_public: z.boolean(),
 });
 export const proposalSteps = [

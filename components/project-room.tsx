@@ -7,6 +7,7 @@ import { CommunityFeed, CommunityConnectionNote } from "./community-feed";
 import { CommunityAction } from "./community-forms";
 import { getPosts, communityReady, getViewer } from "@/lib/community";
 import { getGitHub, repositoryUrl } from "@/lib/github";
+import { EditorialPhoto } from "./editorial-photo";
 
 const tabs = [
   "Overview",
@@ -35,6 +36,9 @@ export async function ProjectRoom({
   const root = `/projects/${p.slug}`;
   return (
     <div className="page-content">
+      {tab === "Overview" && (
+        <EditorialPhoto name="workshop" className="project-cover" priority />
+      )}
       <div className="project-room-header">
         <div className="page-intro">
           <div className="eyebrow">
@@ -159,6 +163,14 @@ export async function ProjectRoom({
                   Keep lasting context here and link the conversation that
                   changed it. A chat thread should never be the only place a
                   decision exists.
+                </p>
+                <a className="button" href={`${root}/brief`} download>
+                  Download project brief (.md)
+                </a>
+                <p className="form-help">
+                  Take the goal, task briefs, acceptance criteria, and review
+                  requirements with you. The download contains public project
+                  context.
                 </p>
                 <div className="brief-steps">
                   <Link href="/docs/contributor-guide">
@@ -312,6 +324,9 @@ export async function ProjectRoom({
             </a>
             <a className="button" href={repositoryUrl}>
               Open GitHub ↗
+            </a>
+            <a className="button" href={`${root}/brief`} download>
+              Download project brief
             </a>
           </section>
           <section className="hub-panel">
