@@ -1,5 +1,9 @@
 # Release acceptance
 
+The owner is the final release authority and needs no second person's permission.
+Other contributors require owner approval or explicit delegation. Automated checks
+remain mandatory for everyone. See [Owner authority](owner-authority.md).
+
 1. Verify a clean dependency install, TypeScript, database behavior tests, production build, browser flows, and dependency audit.
 2. Review light, dark, and system modes at desktop and mobile sizes. Test keyboard navigation, screen readers, zoom, and reduced motion.
 3. Configure a dedicated Supabase project and exact callback origins. Run advisors and real-provider staging checks in README.md.
