@@ -12,7 +12,7 @@ The save operation uses verified `auth.getUser()`, existing origin validation, s
 
 ## Remaining hosted verification
 
-Dedicated Supabase provisioning requires the owner's organization choice and provider cost confirmation. Once provisioned, configure production and staging callback URLs, email delivery and GitHub OAuth; apply and audit the migrations; then verify real signup, callback recovery, duplicate handles, private/public directory visibility, and editing under two distinct accounts. Local policy tests do not substitute for this hosted auth check.
+On October 3, 2026 the owner chose the existing `retehost-cfw` project with CFH data in separate schemas. See `supabase/shared/README.md` for the isolated migration and the current read-only database blocker. After that blocker is resolved, configure exact callback URLs and email delivery, verify any enabled OAuth provider, apply and audit the shared-schema migration, and exercise real signup and two-user isolation. Local policy tests do not substitute for hosted auth checks.
 
 ## Photography
 
@@ -20,4 +20,4 @@ Four real photographs replace the homepage decoration and project card artwork, 
 
 ## Release path
 
-This change uses a feature branch and preview. Main requires the three CI checks and independent code-owner approval; branch protection must remain enabled. A review must not be replaced by direct production promotion.
+This change uses a feature branch and preview. Main requires the three CI checks. The owner has final release authority under `docs/owner-authority.md`; everyone else requires owner approval or explicit delegation.
