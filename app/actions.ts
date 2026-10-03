@@ -154,6 +154,7 @@ export async function signIn(
         options: {
           emailRedirectTo: callback,
           shouldCreateUser: form.get("intent") === "signup",
+          data: { signup_platform: "coders-for-humanity" },
         },
       });
       if (error)

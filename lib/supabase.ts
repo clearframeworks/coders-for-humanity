@@ -14,6 +14,8 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      db: { schema: "cfh" },
+      cookieOptions: { name: "cfh-auth" },
       cookies: {
         getAll() {
           return jar.getAll();
