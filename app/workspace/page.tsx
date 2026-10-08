@@ -6,6 +6,7 @@ import { communityReady, getViewer } from "@/lib/community";
 import { createClient } from "@/lib/supabase";
 import { WorkspaceNotebook } from "@/components/workspace-notebook";
 import { humanWork } from "@/lib/harness";
+import { ReleaseClaim } from "@/components/release-claim";
 export const metadata = { title: "My workspace" };
 type Assigned = {
   task_id: string;
@@ -160,6 +161,7 @@ export default async function Workspace({
                     status={task.status}
                     evidence={task.submission_evidence || ""}
                   />
+                  {["CLAIMED", "IN PROGRESS", "BLOCKED"].includes(task.status) && <ReleaseClaim id={task.id} />}
                   <Link className="text-link" href={`/work/${task.id}`}>
                     Full context and acceptance criteria →
                   </Link>

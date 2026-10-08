@@ -1,5 +1,13 @@
 # Coders for Humanity
 
+## October 8 platform candidate
+
+This candidate preserves live source `301c3cad06f6960b859dcf2a325ca02038062db5` and the previous signup preparation. The current design and rollout sequence are in [community-platform-architecture.md](docs/community-platform-architecture.md). [Delivery evidence](docs/delivery-audit-20261008.md) distinguishes production from this candidate.
+
+New source includes maintainer task publishing, dependency checks, claim release with a durable handoff, founder profile alerts with a scoped email worker, current-commit GitHub check visibility, and signup failure handling. These features still need hosted activation. Production has no Supabase connection configured; the selected shared database refused connections on October 8. No successful hosted signup or delivered founder alert is claimed.
+
+The owner previously selected the existing shared `retehost-cfw` project. Use only the CFH-specific bundle in [supabase/shared](supabase/shared/README.md), never the historical dedicated-project migrations against that shared database. The dedicated-project setup section below is historical context. Configure notifications using [founder-notifications.md](docs/founder-notifications.md); shared administrator credentials must not enter CFH's web runtime.
+
 A community workspace for people building public-interest projects together: shared context, useful contributions, independent review, and handoffs that let the next person continue.
 
 This source is the **public foundation**, not a demonstration catalogue. It contains one real founding project—the community platform itself—and seven unassigned work briefs with stable UUIDs. It does not invent members, conversations, completed contributions, impact, or funding.

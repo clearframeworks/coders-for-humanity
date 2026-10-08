@@ -4,6 +4,20 @@ import { PGlite } from "@electric-sql/pglite";
 import { sharedSchemaMigration } from "../scripts/shared-schema";
 import { readFileSync } from "node:fs";
 
+test("shared migration is identical on Windows and Linux checkouts", () => {
+  const unix = (file: string) => readFileSync(file, "utf8").replace(/\r\n/g, "\n");
+  assert.equal(sharedSchemaMigration(unix), sharedSchemaMigration((file) => unix(file).replace(/\n/g, "\r\n")));
+});
+
+test("schema transformation preserves private-profile notification prose", () => {
+  const migration = sharedSchemaMigration(() => "create schema if not exists private;\nrevoke all on schema private from public;\nselect private.send('A contributor created a private CFH profile.');\nselect tablename from pg_tables where schemaname='private';\n");
+  assert.match(migration, /create schema if not exists cfh_private;/);
+  assert.match(migration, /revoke all on schema cfh_private from public;/);
+  assert.match(migration, /cfh_private\.send\('A contributor created a private CFH profile\.'/);
+  assert.match(migration, /schemaname='cfh_private'/);
+  assert.doesNotMatch(migration, /created a cfh_private/);
+});
+
 test("checked-in shared migration matches the reviewed schema transformation", () => {
   assert.equal(
     readFileSync(
@@ -17,7 +31,7 @@ test("checked-in shared migration matches the reviewed schema transformation", (
 test("shared installation leaves existing applications untouched and isolates CFH profiles", async () => {
   const db = new PGlite();
   try {
-    await db.exec(`create role anon nologin; create role authenticated nologin;
+    await db.exec(`create role anon nologin; create role authenticated nologin; create role authenticator nologin;
       create schema auth; create table auth.users(id uuid primary key);
       create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
       grant usage on schema auth to anon, authenticated;

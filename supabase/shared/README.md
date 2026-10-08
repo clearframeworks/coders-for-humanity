@@ -15,6 +15,16 @@ public/private tables remain untouched and cross-user CFH edits are rejected.
 
 ## Current blocker
 
+October 8 recheck: the SQL connection was refused, then returned PostgreSQL
+`57P03` (database not accepting connections). Current schema contents, capacity,
+and writeability could not be verified. The October 3 findings below are
+historical evidence. No migration or runtime activation was attempted today.
+
+The generated initial-install bundle now includes task development/handoffs and
+the founder notification worker. Confirm the CFH schemas are absent before using
+it. If they exist, reconcile installed history and prepare incremental changes;
+do not replay this initial schema creation bundle.
+
 On October 3, 2026 the live database reported `default_transaction_read_only=on`
 from its server configuration and a database size of 1566 MB. The migration tool
 rejected the operation before creating its history table. Both CFH schemas remain

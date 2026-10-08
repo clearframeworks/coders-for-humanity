@@ -321,7 +321,7 @@ test("search, unconnected accounts and financial records do not invent activity"
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: /Continue with GitHub/ }),
-  ).toBeDisabled();
+  ).toHaveCount(0);
   await expect(
     page.getByRole("button", { name: "Send a sign-in link", exact: true }),
   ).toBeDisabled();

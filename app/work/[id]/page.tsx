@@ -4,6 +4,7 @@ import { getCatalog } from "@/lib/catalog";
 import { PageIntro, Badge, DemoNote } from "@/components/ui";
 import { ClaimButton } from "@/components/claim-button";
 import { communityReady } from "@/lib/community";
+import { createClient } from "@/lib/supabase";
 export default async function TaskPage({
   params,
 }: {
@@ -13,6 +14,13 @@ export default async function TaskPage({
   const t = c.tasks.find((t) => t.id === id);
   if (!t) notFound();
   const p = c.projects.find((p) => p.id === t.project_id);
+  let handoffs: { id: string; body: string; created_at: string }[] = [];
+  if (communityReady() && !t.is_demo) {
+    const db = await createClient();
+    const { data, error } = await db.from("task_handoffs").select("id,body,created_at").eq("task_id", t.id).order("created_at", { ascending: false }).limit(20);
+    if (error) throw new Error("Task handoffs could not be loaded.");
+    handoffs = data;
+  }
   return (
     <div className="page-content">
       <PageIntro
@@ -72,6 +80,7 @@ export default async function TaskPage({
             <p>No repository issue is linked yet.</p>
           )}
         </section>
+        {handoffs.length > 0 && <section><h2>Contributor handoffs</h2>{handoffs.map((handoff) => <article className="hub-panel" key={handoff.id}><time dateTime={handoff.created_at}>{new Date(handoff.created_at).toLocaleDateString("en", { timeZone: "UTC" })}</time><p style={{ whiteSpace: "pre-wrap" }}>{handoff.body}</p></article>)}</section>}
         {communityReady() ? (
           <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
         ) : (

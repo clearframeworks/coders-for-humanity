@@ -304,8 +304,10 @@ grant execute on function cfh_private.read_notifications(),cfh.read_notification
 insert into cfh.projects(id,slug,name,program_id,summary,problem,objective,status,license,architecture,evidence,published)
 values('cf000000-0000-4000-8000-000000000001','community-platform','Community platform','civic-infrastructure','The community and shared workspace behind Coders for Humanity.','Contributors need one place to find people, discuss problems, and coordinate work across open-source projects.','Build and operate the CFH community, project workspaces, and shared GitHub integration.','BUILDING','MIT','Next.js and TypeScript application, PostgreSQL community data, and a dedicated public GitHub repository.','The platform is in active development in the clearframeworks/coders-for-humanity repository.',true);
 insert into cfh.project_repositories(project_id,name,url) values('cf000000-0000-4000-8000-000000000001','coders-for-humanity','https://github.com/clearframeworks/coders-for-humanity');
+
 -- Real founding work requested by the owner. No fabricated people or outcomes.
 -- Stable IDs match lib/harness.ts; never overwrite task progress during provisioning.
+
 insert into cfh.tasks (id,project_id,title,discipline,level,effort,technology,objective,context,acceptance,dependencies,reviewer,assignee,issue_url,status,is_demo) values
 ('cf100000-0000-4000-8000-000000000001','cf000000-0000-4000-8000-000000000001','Establish the independent harness team','Security','Specialist','Ongoing','Security review · GitHub','Give the community an accountable review team before widening release access.','The platform is being handed to human maintainers. Contributor, reviewer and release authority must remain separate. No security team has been appointed yet.','Publish consenting maintainer and security reviewer contacts; document conflicts of interest and coverage; configure protected main with required checks and fresh independent reviews; prove a failing pull request cannot merge; record provider evidence.','Owner appoints trusted reviewers and approves repository settings.','Repository owner; independent security reviewer to be appointed','Unassigned',null,'OPEN',false),
 ('cf100000-0000-4000-8000-000000000002','cf000000-0000-4000-8000-000000000001','Verify accounts and data isolation with real users','Backend','Advanced','Multi-day','Supabase · PostgreSQL · Next.js','Enable shared community work only after isolation is verified on the hosted system.','Migrations and protected actions are implemented locally. Production account infrastructure needs an explicitly approved dedicated database and provider configuration.','Configure approved database and authentication; test anonymous, two-member and maintainer sessions; demonstrate blocked cross-user edits and role escalation; test revoked sessions, callback origins and rate limits; attach sanitized test evidence.','Dedicated Supabase project approval; harness reviewer assigned.','Backend maintainer and independent security reviewer','Unassigned',null,'OPEN',false),
@@ -315,4 +317,241 @@ insert into cfh.tasks (id,project_id,title,discipline,level,effort,technology,ob
 ('cf100000-0000-4000-8000-000000000006','cf000000-0000-4000-8000-000000000001','Exercise the review boundary against hostile contributions','Testing','Advanced','3–8 hours','Threat modeling · Integration tests','Demonstrate that untrusted contributions cannot gain authority or ship themselves.','Use a staging environment with synthetic data. Test malicious links, abusive content, task races, self-approval and dependency changes without running untrusted code with production secrets.','Publish a threat model and reproducible safe tests; prove self-approval and unauthorized completion are rejected; demonstrate stale evidence blocks acceptance; verify that application task completion cannot trigger a production deploy.','Hosted staging auth; independent review and release controls configured.','Harness security reviewer','Unassigned',null,'OPEN',false),
 ('cf100000-0000-4000-8000-000000000007','cf000000-0000-4000-8000-000000000001','Rehearse a release and rollback with a human steward','DevOps','Advanced','3–8 hours','Vercel · GitHub Actions','Make every release attributable, reviewable and recoverable.','A successful build is evidence, not authorization. Keep public contributor CI separate from hosting credentials and production approval.','Record source SHA, preview URL, check results and independent approvals; prove unauthorized deployment denied; rehearse rollback in staging; verify the released URL and record an owner-approved production procedure.','Harness team appointed; hosting release permissions reviewed.','Repository owner and security reviewer','Unassigned',null,'OPEN',false)
 on conflict (id) do nothing;
+
+
+alter table cfh.tasks add column reviewer_id uuid references cfh.profiles;
+create index tasks_reviewer on cfh.tasks(reviewer_id);
+
+-- Handoffs remain visible with their task, even after its assignment changes.
+create table cfh.task_handoffs (
+ id uuid primary key default gen_random_uuid(),
+ task_id uuid not null references cfh.tasks on delete cascade,
+ author_id uuid not null references cfh.profiles,
+ body text not null check(length(trim(body)) between 20 and 5000),
+ created_at timestamptz not null default now()
+);
+create index task_handoffs_task on cfh.task_handoffs(task_id,created_at);
+create index task_handoffs_author on cfh.task_handoffs(author_id);
+alter table cfh.task_handoffs enable row level security;
+revoke all on cfh.task_handoffs from public,anon,authenticated;
+grant select on cfh.task_handoffs to anon,authenticated;
+create policy visible_task_handoffs on cfh.task_handoffs for select to anon,authenticated
+ using(exists(select 1 from cfh.tasks t where t.id=task_id));
+
+create function cfh_private.create_task_brief(payload jsonb) returns uuid
+ language plpgsql security definer set search_path='' as $$
+declare project_input uuid; reviewer_input uuid; new_id uuid; dependency_input uuid;
+ field text; reviewer_name text; dependencies_text text;
+begin
+ if auth.uid() is null then raise exception 'Sign in first'; end if;
+ project_input=(payload->>'project_id')::uuid;
+ reviewer_input=(payload->>'reviewer_id')::uuid;
+ -- Lock the project while checking publication and authority.
+ perform 1 from cfh.projects where id=project_input and published and not is_demo and status<>'ARCHIVED' for update;
+ if not found or not exists(select 1 from cfh.project_maintainers where project_id=project_input and user_id=auth.uid()) then
+   raise exception 'Project maintainer required';
+ end if;
+ select p.name into reviewer_name from cfh.project_maintainers m join cfh.profiles p on p.id=m.user_id
+ where m.project_id=project_input and m.user_id=reviewer_input and p.is_public;
+ if not found then raise exception 'Choose a public project maintainer as reviewer'; end if;
+ if payload->>'title' is null or length(trim(payload->>'title')) not between 8 and 180 then raise exception 'Invalid title'; end if;
+ if payload->>'technology' is null or length(trim(payload->>'technology')) not between 1 and 200 then raise exception 'Invalid technology'; end if;
+ foreach field in array array['objective','context','acceptance'] loop
+   if payload->>field is null or length(trim(payload->>field)) not between 20 and (case when field='objective' then 5000 else 10000 end) then raise exception 'Complete the work brief'; end if;
+ end loop;
+ if payload->>'discipline' is null or payload->>'discipline' not in ('Frontend','Backend','Full Stack','DevOps','Security','Data','AI/ML','UX/UI','Accessibility','Documentation','Testing','Research','Translation','Legal/Policy','Domain Expertise','Project Management','Field Testing') then raise exception 'Invalid discipline'; end if;
+ if jsonb_typeof(payload->'dependency_ids') is distinct from 'array' then raise exception 'Invalid dependencies'; end if;
+ if jsonb_array_length(payload->'dependency_ids')>20 then raise exception 'Too many dependencies'; end if;
+ for dependency_input in select value::uuid from jsonb_array_elements_text(payload->'dependency_ids') loop
+   perform 1 from cfh.tasks where id=dependency_input and project_id=project_input and not is_demo for share;
+   if not found then raise exception 'Dependencies must belong to this project'; end if;
+ end loop;
+ perform cfh_private.consume_limit('task_create',20);
+ select string_agg(t.title,'; ' order by t.title) into dependencies_text from cfh.tasks t
+ where t.id in (select value::uuid from jsonb_array_elements_text(payload->'dependency_ids'));
+ insert into cfh.tasks(project_id,title,discipline,level,effort,technology,objective,context,acceptance,dependencies,reviewer,reviewer_id)
+ values(project_input,trim(payload->>'title'),payload->>'discipline',payload->>'level',payload->>'effort',trim(payload->>'technology'),trim(payload->>'objective'),trim(payload->>'context'),trim(payload->>'acceptance'),coalesce(dependencies_text,'No dependencies'),reviewer_name,reviewer_input)
+ returning id into new_id;
+ insert into cfh.task_dependencies(task_id,depends_on)
+ select distinct new_id,value::uuid from jsonb_array_elements_text(payload->'dependency_ids');
+ insert into cfh_private.audit_log(actor_id,event,record_id) values(auth.uid(),'task.created',new_id::text);
+ return new_id;
+end $$;
+create function cfh.create_task_brief(payload jsonb) returns uuid language sql security invoker set search_path='' as $$select cfh_private.create_task_brief(payload)$$;
+revoke all on function cfh_private.create_task_brief(jsonb),cfh.create_task_brief(jsonb) from public,anon;
+grant execute on function cfh_private.create_task_brief(jsonb),cfh.create_task_brief(jsonb) to authenticated;
+
+create function cfh_private.release_task_claim(task_input uuid,handoff_input text) returns void
+ language plpgsql security definer set search_path='' as $$
+declare current_task cfh.tasks;
+begin
+ if auth.uid() is null then raise exception 'Sign in first'; end if;
+ select * into current_task from cfh.tasks where id=task_input for update;
+ if not found or current_task.is_demo or current_task.status not in ('CLAIMED','IN PROGRESS','BLOCKED') then raise exception 'Task cannot be released in this state'; end if;
+ if not exists(select 1 from cfh.task_assignments where task_id=task_input and user_id=auth.uid()) then raise exception 'Only the assigned contributor can release this claim'; end if;
+ if handoff_input is null or length(trim(handoff_input)) not between 20 and 5000 then raise exception 'Leave a useful handoff'; end if;
+ perform cfh_private.consume_limit('task_release',30);
+ insert into cfh.task_handoffs(task_id,author_id,body) values(task_input,auth.uid(),trim(handoff_input));
+ delete from cfh.task_assignments where task_id=task_input and user_id=auth.uid();
+ update cfh.tasks set status='OPEN',assignee='Unassigned',submission_evidence=null,submission_version=submission_version+1 where id=task_input;
+ insert into cfh_private.audit_log(actor_id,event,record_id) values(auth.uid(),'task.claim_released',task_input::text);
+end $$;
+create function cfh.release_task_claim(task_input uuid,handoff_input text) returns void language sql security invoker set search_path='' as $$select cfh_private.release_task_claim(task_input,handoff_input)$$;
+revoke all on function cfh_private.release_task_claim(uuid,text),cfh.release_task_claim(uuid,text) from public,anon;
+grant execute on function cfh_private.release_task_claim(uuid,text),cfh.release_task_claim(uuid,text) to authenticated;
+
+-- Existing profiles can claim work; profile privacy does not grant extra authority.
+-- Archive status must be checked when claiming as well as when submitting work.
+create or replace function cfh_private.claim_task(task_id_input uuid) returns void language plpgsql security definer set search_path='' as $$
+declare current_task cfh.tasks; begin
+ if auth.uid() is null or not exists(select 1 from cfh.profiles where id=auth.uid()) then raise exception 'A signed-in contributor profile is required'; end if;
+ perform cfh_private.consume_limit('claim',15);
+ select t.* into current_task from cfh.tasks t join cfh.projects p on p.id=t.project_id where t.id=task_id_input and p.published and p.status<>'ARCHIVED' and not p.is_demo and not t.is_demo for update of t;
+ if not found or current_task.status<>'OPEN' then raise exception 'This task is not available'; end if;
+ if exists(select 1 from cfh.task_dependencies d join cfh.tasks t on t.id=d.depends_on where d.task_id=task_id_input and t.status<>'COMPLETE') then raise exception 'Dependencies are not complete'; end if;
+ insert into cfh.task_assignments(task_id,user_id) values(task_id_input,auth.uid());
+ update cfh.tasks set status='CLAIMED',assignee='Assigned contributor' where id=task_id_input;
+ insert into cfh_private.audit_log(actor_id,event,record_id) values(auth.uid(),'task.claimed',task_id_input::text);
+end $$;
+
+
+-- CFH membership starts at profile creation, including people with existing
+-- shared Auth identities. No shared auth.users or central mail tables change.
+create table cfh_private.founder_notification_settings (
+ singleton boolean primary key default true check(singleton),
+ user_id uuid not null references cfh.profiles(id),
+ email text not null check(length(email)<=254 and email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
+ created_at timestamptz not null default now()
+);
+create table cfh_private.profile_events (
+ id uuid primary key default gen_random_uuid(),
+ profile_id uuid unique not null references cfh.profiles(id) on delete cascade,
+ event_type text not null default 'profile.created' check(event_type='profile.created'),
+ created_at timestamptz not null default now()
+);
+create table cfh_private.founder_notification_outbox (
+ id uuid primary key default gen_random_uuid(),
+ event_id uuid unique not null references cfh_private.profile_events(id) on delete cascade,
+ recipient_id uuid not null references cfh.profiles(id),
+ recipient_email text not null,
+ sender_email text,
+ notification_id uuid not null references cfh.notifications(id) on delete cascade,
+ subject text not null,
+ message text not null,
+ status text not null default 'requires_sender' check(status in ('requires_sender','pending','inflight','sent','needs_review')),
+ attempts integer not null default 0 check(attempts>=0),
+ first_attempt_at timestamptz,
+ leased_at timestamptz,
+ lease_id uuid,
+ next_attempt_at timestamptz not null default now(),
+ provider_id text,
+ last_error text,
+ sent_at timestamptz,
+ created_at timestamptz not null default now(),
+ check(status<>'sent' or (provider_id is not null and sent_at is not null))
+);
+create index founder_notification_due on cfh_private.founder_notification_outbox(next_attempt_at) where status='pending';
+alter table cfh_private.founder_notification_settings enable row level security;
+alter table cfh_private.profile_events enable row level security;
+alter table cfh_private.founder_notification_outbox enable row level security;
+revoke all on cfh_private.founder_notification_settings,cfh_private.profile_events,cfh_private.founder_notification_outbox from public,anon,authenticated;
+
+-- Runs only from database-owned triggers, never from the public API. The
+-- privileged operator chooses the founder UUID; user-editable metadata is ignored.
+create function cfh_private.route_profile_event(event_input uuid) returns void
+language plpgsql security definer set search_path='' as $$
+declare owner_record cfh_private.founder_notification_settings; event_record cfh_private.profile_events;
+ profile_record cfh.profiles; notice_id uuid; notice_text text;
+begin
+ select * into owner_record from cfh_private.founder_notification_settings where singleton;
+ if not found then return; end if;
+ select * into event_record from cfh_private.profile_events where id=event_input for update;
+ if not found or exists(select 1 from cfh_private.founder_notification_outbox where event_id=event_input) then return; end if;
+ select * into profile_record from cfh.profiles where id=event_record.profile_id;
+ if not found then return; end if;
+ notice_text := case when profile_record.is_public then 'A contributor created a CFH profile: '||profile_record.name||' (@'||profile_record.username||'). Public profile: https://cfh.retehost.com/people/'||profile_record.username
+     else 'A contributor created a private CFH profile.' end;
+ insert into cfh.notifications(user_id,message) values(owner_record.user_id,notice_text) returning id into notice_id;
+ insert into cfh_private.founder_notification_outbox(event_id,recipient_id,recipient_email,notification_id,subject,message)
+ values(event_record.id,owner_record.user_id,owner_record.email,notice_id,'[New CFH contributor] Profile created',notice_text);
+end $$;
+revoke all on function cfh_private.route_profile_event(uuid) from public,anon,authenticated;
+
+create function cfh_private.capture_profile_created() returns trigger
+language plpgsql security definer set search_path='' as $$
+declare event_id uuid;
+begin
+ if new.is_demo then return new; end if;
+ insert into cfh_private.profile_events(profile_id) values(new.id) on conflict(profile_id) do nothing returning id into event_id;
+ if event_id is not null then perform cfh_private.route_profile_event(event_id); end if;
+ return new;
+end $$;
+revoke all on function cfh_private.capture_profile_created() from public,anon,authenticated;
+create trigger cfh_profile_created after insert on cfh.profiles for each row execute function cfh_private.capture_profile_created();
+
+-- Capture events before operator setup without losing them. Adding the founder
+-- config routes the backlog once. Existing events are not resent when config changes.
+create function cfh_private.route_pending_profile_events() returns trigger
+language plpgsql security definer set search_path='' as $$
+declare event_record record;
+begin
+ for event_record in select e.id from cfh_private.profile_events e
+   where not exists(select 1 from cfh_private.founder_notification_outbox o where o.event_id=e.id)
+   order by e.created_at,e.id loop
+  perform cfh_private.route_profile_event(event_record.id);
+ end loop;
+ return new;
+end $$;
+revoke all on function cfh_private.route_pending_profile_events() from public,anon,authenticated;
+create trigger cfh_founder_configured after insert or update on cfh_private.founder_notification_settings
+for each row execute function cfh_private.route_pending_profile_events();
+
+-- Only the narrowly scoped worker role may lease and complete mail. Nothing here
+-- activates a scheduler or changes shared Auth/SMTP configuration.
+create role cfh_notification_worker nologin noinherit;
+grant cfh_notification_worker to authenticator;
+create function cfh_private.claim_founder_email(sender_input text) returns jsonb
+language plpgsql security definer set search_path='' as $$
+declare item cfh_private.founder_notification_outbox;
+begin
+ if sender_input is null or length(sender_input)>254 or sender_input !~ '^[^[:space:]@<>]+@[^[:space:]@<>]+\.[^[:space:]@<>]+$' then raise exception 'Verified sender email required'; end if;
+ update cfh_private.founder_notification_outbox set status='needs_review',last_error='retry_window_expired'
+ where status in ('pending','inflight') and (attempts>=12 or first_attempt_at<now()-interval '20 hours')
+   and (leased_at is null or leased_at<now()-interval '2 minutes');
+ select * into item from cfh_private.founder_notification_outbox
+ where (status in ('requires_sender','pending') and next_attempt_at<=now())
+    or (status='inflight' and leased_at<now()-interval '2 minutes')
+ order by created_at,id limit 1 for update skip locked;
+ if not found then return null; end if;
+ update cfh_private.founder_notification_outbox set status='inflight',attempts=attempts+1,
+   first_attempt_at=coalesce(first_attempt_at,now()),leased_at=now(),lease_id=gen_random_uuid(),sender_email=coalesce(sender_email,sender_input)
+ where id=item.id returning * into item;
+ return jsonb_build_object('id',item.id,'lease_id',item.lease_id,'recipient_email',item.recipient_email,'sender_email',item.sender_email,
+   'subject',item.subject,'message',item.message);
+end $$;
+create function cfh_private.finish_founder_email(item_input uuid,lease_input uuid,provider_input text,error_input text,retry_input boolean) returns void
+language plpgsql security definer set search_path='' as $$
+declare item cfh_private.founder_notification_outbox;
+begin
+ select * into item from cfh_private.founder_notification_outbox where id=item_input and lease_id=lease_input and status='inflight' for update;
+ if not found then raise exception 'Mail lease expired or already completed'; end if;
+ if coalesce(length(provider_input),0)>0 then
+  update cfh_private.founder_notification_outbox set status='sent',provider_id=left(provider_input,200),sent_at=now(),last_error=null where id=item.id;
+ else
+  update cfh_private.founder_notification_outbox set status=case when retry_input and attempts<12 and first_attempt_at>now()-interval '20 hours' then 'pending' else 'needs_review' end,
+   next_attempt_at=now()+make_interval(secs=>least(3600,60*(2^least(attempts,6))::integer)),
+   last_error=left(coalesce(error_input,'provider_failed'),100)
+   where id=item.id;
+ end if;
+end $$;
+create function cfh.claim_founder_email(sender_input text) returns jsonb language sql security invoker set search_path='' as $$select cfh_private.claim_founder_email(sender_input)$$;
+create function cfh.finish_founder_email(item_input uuid,lease_input uuid,provider_input text,error_input text,retry_input boolean) returns void
+language sql security invoker set search_path='' as $$select cfh_private.finish_founder_email(item_input,lease_input,provider_input,error_input,retry_input)$$;
+revoke all on function cfh_private.claim_founder_email(text),cfh.claim_founder_email(text),
+ cfh_private.finish_founder_email(uuid,uuid,text,text,boolean),cfh.finish_founder_email(uuid,uuid,text,text,boolean) from public,anon,authenticated;
+grant usage on schema cfh_private to cfh_notification_worker;
+grant usage on schema cfh to cfh_notification_worker;
+grant execute on function cfh_private.claim_founder_email(text),cfh.claim_founder_email(text),
+ cfh_private.finish_founder_email(uuid,uuid,text,text,boolean),cfh.finish_founder_email(uuid,uuid,text,text,boolean) to cfh_notification_worker;
+
 commit;

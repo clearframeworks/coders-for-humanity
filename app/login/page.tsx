@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form";
 import { isDemo, configured } from "@/lib/supabase";
 import { safeNext } from "@/lib/filters";
 import Link from "next/link";
+import { githubAuthEnabled } from "@/lib/account-readiness";
 export const metadata = { title: "Join the work" };
 export default async function Login({
   searchParams,
@@ -32,7 +33,7 @@ export default async function Login({
           The sign-in link could not be verified. Please request a new link.
         </div>
       )}
-      <LoginForm next={safeNext(p.next)} disabled={disabled} />
+      <LoginForm next={safeNext(p.next)} disabled={disabled} githubEnabled={githubAuthEnabled(process.env.CFH_GITHUB_AUTH_ENABLED)} />
       <p className="auth-create-link">
         New to the community? <Link href="/join">Create your profile →</Link>
       </p>

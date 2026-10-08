@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { summarizeChecks, type CheckRun, type CommitStatus, type CheckReport } from "./github-checks";
 export const repository = "clearframeworks/coders-for-humanity";
 export const repositoryUrl = `https://github.com/${repository}`;
 export type GitHubIssue = {
@@ -15,6 +16,8 @@ export type GitHubIssue = {
   pull_request?: { url: string };
   draft?: boolean;
   body: string | null;
+  head?: { sha: string };
+  checks?: CheckReport;
 };
 export type GitHubCommit = {
   sha: string;
@@ -39,7 +42,8 @@ async function read<T>(path: string): Promise<T> {
       "X-GitHub-Api-Version": "2026-03-10",
       "User-Agent": "Coders-for-Humanity",
     },
-    next: { revalidate: 120 },
+    // Bound public unauthenticated API usage, including per-PR checks.
+    next: { revalidate: 600 },
     signal: AbortSignal.timeout(8000),
   });
   if (!r.ok)
@@ -77,6 +81,17 @@ export const getGitHub = cache(async (): Promise<GitHubData> => {
       read<GitHubIssue[]>("/pulls?state=open&per_page=50"),
       read<GitHubCommit[]>("/commits?per_page=12"),
     ]);
+    const pulls = results[1].status === "fulfilled" ? results[1].value : [];
+    // Inspect a bounded number of current heads. Never infer green from missing data.
+    await Promise.all(pulls.slice(0, 3).map(async (pull) => {
+      const sha = pull.head?.sha;
+      if (!sha || !/^[a-f0-9]{40}$/.test(sha)) return;
+      const [runs, statuses] = await Promise.allSettled([
+        read<{ check_runs: CheckRun[]; total_count: number }>(`/commits/${sha}/check-runs?filter=latest&per_page=100`),
+        read<{ sha: string; statuses: CommitStatus[]; total_count: number }>(`/commits/${sha}/status?per_page=100`),
+      ]);
+      pull.checks = summarizeChecks(sha, runs.status === "fulfilled" ? runs.value : null, statuses.status === "fulfilled" ? statuses.value : null);
+    }));
     return {
       ...empty,
       connected: true,
@@ -86,7 +101,7 @@ export const getGitHub = cache(async (): Promise<GitHubData> => {
         results[0].status === "fulfilled"
           ? results[0].value.filter((x) => !x.pull_request)
           : [],
-      pulls: results[1].status === "fulfilled" ? results[1].value : [],
+      pulls,
       commits: results[2].status === "fulfilled" ? results[2].value : [],
       error: results.some((r) => r.status === "rejected")
         ? "Some GitHub activity is unavailable. Open the repository for its current state."
