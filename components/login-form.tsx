@@ -58,6 +58,7 @@ export function LoginForm({
         </div>
       )}
       <p className="form-help">
+        {intent === "signup" && "New here? Your verification link creates your account. Already a member? The same link signs you in. "}
         No password to remember. Your email address is never included in your
         public profile.
       </p>

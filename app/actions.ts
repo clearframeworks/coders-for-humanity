@@ -171,11 +171,13 @@ export async function signIn(
         };
       return {
         message:
-          "Check your email for a sign-in link. It will return you to this site.",
+          form.get("intent") === "signup"
+            ? "Check your email for a verification link. Open it in this browser, then finish creating your profile."
+            : "Check your email for a sign-in link. It will return you to this site.",
       };
     }
-  } catch (e) {
-    return { error: message(e) };
+  } catch {
+    return { error: "Sign-in could not be started. Please reload the page and try again." };
   }
   if (destination) redirect(destination);
   return {};
