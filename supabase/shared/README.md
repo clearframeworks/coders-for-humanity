@@ -1,65 +1,34 @@
-# CFH in retehost-cfw
+# CFH namespaced installation
 
-The owner authorized the existing `retehost-cfw` project (`msekcqxmwvxxxqcsdpfn`)
-on October 3, 2026 to avoid another paid project. CFH uses the `cfh` schema for
-application tables and API functions, and the unexposed `cfh_private` schema for
-roles, audit records, rate limits, and privileged helpers. Auth identities and
-project capacity are shared; this is data separation, not an independent Auth
-tenant. An existing Retehost identity still needs to create a CFH profile.
+The approved target is the owner-created dedicated Free Supabase project **Coders for Humanity** (`uinavtzevjoskkymhakx`), organization `javqroqxdnqbgoqkzknt`, West US / Oregon (`us-west-2`). It has its own database and Auth tenant. No pause or upgrade of another project is needed.
 
-**Do not apply `supabase/migrations` directly to the shared project.** Those are
-the historical dedicated-project migrations and contain public-schema grant/RLS
-loops. Apply only this directory's generated migration. `scripts/shared-schema.ts`
-translates all schema references and schema-scoped loops; tests verify unrelated
-public/private tables remain untouched and cross-user CFH edits are rejected.
+The `shared` directory name is historical. The application expects `cfh` for application tables/API functions and unexposed `cfh_private` for authority records, audit logs, rate limits, and notification helpers, even in this dedicated project.
 
-## Current blocker
+## Verified installation
 
-October 8 recheck: the SQL connection was refused, then returned PostgreSQL
-`57P03` (database not accepting connections). Current schema contents, capacity,
-and writeability could not be verified. The October 3 findings below are
-historical evidence. No migration or runtime activation was attempted today.
+October 8 preflight confirmed read-only mode off, a 10 MB database, and no CFH schemas, Auth users, or public application tables. The reviewed bundle was successfully installed through the signed-in SQL editor. SQL verification found:
 
-The generated initial-install bundle now includes task development/handoffs and
-the founder notification worker. Confirm the CFH schemas are absent before using
-it. If they exist, reconcile installed history and prepare incremental changes;
-do not replay this initial schema creation bundle.
+- 33 `cfh` tables, with zero tables lacking RLS across `cfh` and `cfh_private`.
+- 35 `cfh` policies, seven founding tasks, zero profiles, and one repository.
+- The restricted `cfh_notification_worker` role registered.
+- Zero anonymous private-table SELECT grants; no anonymous or authenticated execution of the privileged mail-claim function.
+- Anonymous `cfh_private` usage only supports the intentionally granted `public_thread_visible` RLS helper; it does not grant private-table access.
 
-On October 3, 2026 the live database reported `default_transaction_read_only=on`
-from its server configuration and a database size of 1566 MB. The migration tool
-rejected the operation before creating its history table. Both CFH schemas remain
-absent. No remote schema changes or production environment changes were applied.
+Data API exposure, Auth/SMTP configuration, the Vercel connection, real signup, and delivered founder alerts remain pending verification. Database installation alone is not hosted acceptance.
 
-The largest relations were existing EVE gateway attestations (634 MB), device
-signature assertions (364 MB), command receipts (290 MB), and claim commands
-(196 MB). These are existing application records, not disposable CFH test data.
-Do not disable read-only protection, delete these records, or purchase capacity
-without a separately scoped owner instruction and a verified recovery plan.
+Use `migrations/20261003150827_shared_cfh_namespace.sql` only for an empty initial installation. `scripts/shared-schema.ts` generates it from five source migrations: institutional foundation, community workspace, founding work, task development/handoffs, and founder notifications. Do not apply `supabase/migrations` directly: those source files create `public`/`private` objects rather than the schemas the current app uses.
+
+The approved target is already installed. Do not replay this initial bundle. Reconcile installed objects/history and prepare incremental changes for subsequent updates.
 
 ## Activation sequence
 
-1. Resolve the shared database's read-only state through the approved capacity or
-   retention procedure. Confirm it accepts writes without overriding protection.
-2. Apply `migrations/20261003150827_shared_cfh_namespace.sql`. Run advisors and
-   confirm CFH RLS, explicit grants, and seven founding tasks.
-3. Append `cfh` to the existing exposed API schemas; preserve all current entries.
-   Never expose `cfh_private`.
-4. Append the exact CFH auth callback to allowed redirects, preserving every
-   existing application's redirects and the shared Site URL. Inspect the existing
-   email sender/hook first; do not replace it with a CFH-only implementation.
-5. Configure only the CFH Vercel project with the shared project URL and publishable
-   key. Never put a service-role key in the app. CFH uses its own `cfh-auth` cookie
-   name. Signup metadata identifies `coders-for-humanity` for mail routing only;
-   it is never an authorization claim.
-6. Verify delivered email, callback, profile creation, duplicate usernames,
-   private/public visibility, sign-out, and two-user isolation against the hosted
-   API. Hide any social provider that is not actually configured.
-7. Release through the owner-authority policy after CI passes; verify public signup
-   on the production domain. Until then, leave production unconfigured so it
-   continues to identify browser drafts honestly.
+1. Run provider security advisors and verify hosted Data API access. Expose `cfh`; never expose `cfh_private`. Confirm anonymous catalogue reads and blocked private/privileged reads.
+2. Configure the dedicated Auth Site URL `https://cfh.retehost.com`, its exact `/auth/callback` redirect, and any exact preview callback used for acceptance testing. Configure the Auth SMTP sender and test real delivery. Do not copy or alter the old shared project's Auth/SMTP settings.
+3. Configure only the CFH Vercel project with the dedicated project URL, publishable key, and exact site URL. Rebuild after public environment changes. Keep service-role keys and JWT signing secrets out of the web runtime. CFH uses the `cfh-auth` cookie name; signup metadata is never authorization.
+4. Leave GitHub OAuth unavailable until provider configuration is complete and explicitly enabled. Verify email-link signup/callback, profile creation, duplicate usernames, public/private visibility, sign-out, and two-user isolation on the hosted app and Data API.
+5. Separately configure and verify founder alerts using [the notification guide](../../docs/founder-notifications.md). Auth email delivery does not establish delivery of founder alerts; queue creation does not establish email receipt.
+6. Release through the owner-authority policy after mandatory checks and hosted acceptance pass. Verify production and record its source and rollback coordinate.
 
-Dashboard sign-in is also needed: the connected database tools do not expose auth
-configuration, the local CLI has no management access token, and the opened
-Supabase dashboard required sign-in. Do not commit downloaded provider config or
-credentials. Current local unit/database and TypeScript tests are not a hosted
-signup acceptance result.
+## Prior shared-project attempt
+
+On October 3 the owner selected `retehost-cfw` (`msekcqxmwvxxxqcsdpfn`) to avoid another paid project. It reported read-only mode and 1566 MB of data; the migration was rejected. On October 8 it refused SQL connections. That service's EVE/EVAN recovery remains separate. The dedicated CFH target supersedes the shared activation plan; do not apply this task's migrations to the broken shared database or change its runtime authority.
