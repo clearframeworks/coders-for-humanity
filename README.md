@@ -1,5 +1,13 @@
 # Coders for Humanity
 
+## October 8 platform candidate
+
+This candidate preserves live source `301c3cad06f6960b859dcf2a325ca02038062db5` and the previous signup preparation. The current design and rollout sequence are in [community-platform-architecture.md](docs/community-platform-architecture.md). [Delivery evidence](docs/delivery-audit-20261008.md) distinguishes production from this candidate.
+
+New source includes maintainer task publishing, dependency checks, claim release with a durable handoff, founder profile alerts with a scoped email worker, current-commit GitHub check visibility, and signup failure handling. On October 8 the owner created and approved the dedicated Free Supabase project **Coders for Humanity** (`uinavtzevjoskkymhakx`) in organization `javqroqxdnqbgoqkzknt`, West US / Oregon (`us-west-2`). The five-migration CFH bundle was installed and database structure/permissions verified. Data API exposure, Auth, Vercel connection, real signup, and founder delivery still require verification. No successful hosted signup or delivered founder alert is claimed.
+
+The previously selected shared `retehost-cfw` project could not accept connections; its recovery is separate. The new dedicated project requires no pause or upgrade of that service. Use the five-migration, CFH-specific bundle in [supabase/shared](supabase/shared/README.md): its directory name is historical, but the current app still expects `cfh` and `cfh_private` schemas. Configure notifications using [founder-notifications.md](docs/founder-notifications.md); administrator credentials must not enter CFH's web runtime.
+
 A community workspace for people building public-interest projects together: shared context, useful contributions, independent review, and handoffs that let the next person continue.
 
 This source is the **public foundation**, not a demonstration catalogue. It contains one real founding project—the community platform itself—and seven unassigned work briefs with stable UUIDs. It does not invent members, conversations, completed contributions, impact, or funding.
@@ -39,23 +47,20 @@ Open [localhost:3100](http://localhost:3100). Production mode is `npm run build`
 | --- | --- |
 | Source repository | The reviewed source is published in `clearframeworks/coders-for-humanity` after the owner's explicit approval on September 28, 2026. The first GitHub CI run passed all three jobs. |
 | Git-triggered deployments | The dedicated CFH Vercel project is connected to this repository, with `main` as its production branch. Merge and release permissions remain separate from community membership. |
-| Supabase | Three migrations and protected actions are implemented and tested locally. No dedicated hosted CFH Supabase project has been provisioned. Organization selection and provisioning cost approval remain pending. |
+| Supabase | Owner-created dedicated Free project `uinavtzevjoskkymhakx` is approved. Five-migration namespaced bundle installed; structure and database permissions verified. API/Auth/application acceptance remains pending. |
 | Authentication | GitHub/email sign-in requires provider configuration and real-session verification. It is not operational merely because the UI or SQL exists. |
-| Harness team | Roles and work briefs are defined. Independent reviewers and release stewards have not been appointed; provider-enforced gates have not been verified. |
+| Harness team | Roles and work briefs are defined. Independent reviewers and release stewards have not been appointed. GitHub mandatory checks and owner review rules were verified on October 8; see the delivery audit. |
 
 See [the human takeover guide](docs/HUMAN-TAKEOVER.md) for the ordered next steps. Do not reuse an unrelated application's database or credentials.
 
 ## Connect the dedicated database
 
-After the owner explicitly chooses the Supabase organization and approves the quoted provisioning cost:
+The approved target is `uinavtzevjoskkymhakx`, organization `javqroqxdnqbgoqkzknt`, on the Free plan. No upgrade or pause of another project is required.
 
-1. Provision the dedicated CFH project and a staging environment appropriate for testing.
-2. Review and apply **all three migrations in filename order**:
-   - `20260928025534_institutional_foundation.sql`
-   - `20260928034553_community_workspace.sql`
-   - `20260928040326_founding_human_work.sql`
+1. Verify the target and installed schema history before any SQL. The October 8 installation is complete; do not replay the initial bundle.
+2. For a future empty initial installation, apply **only** `supabase/shared/migrations/20261003150827_shared_cfh_namespace.sql`. This reviewed bundle includes the three foundation migrations plus `20261008173854_task_development.sql` and `20261008173918_cfh_profile_notifications.sql`, transformed into `cfh` and `cfh_private`. Do not apply the five source migrations directly into `public`. Expose `cfh` through the Data API; never expose `cfh_private`.
 3. Set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and the exact `NEXT_PUBLIC_SITE_URL`. This application does not require a service-role key in its web runtime. Keep provider credentials out of source control.
-4. Configure GitHub OAuth and email authentication in the provider dashboards. Set explicit callback URLs ending in `/auth/callback`; avoid broad production wildcards. Configure delivery, rate limits, and recovery.
+4. Configure this dedicated project's Auth Site URL as `https://cfh.retehost.com` and explicitly allow `https://cfh.retehost.com/auth/callback` plus any exact candidate-preview callback needed for acceptance testing. Configure and verify the Auth SMTP sender, delivery, rate limits, and recovery. GitHub OAuth remains unavailable until its provider credentials/callbacks are configured and `CFH_GITHUB_AUTH_ENABLED=true`. Auth mail and founder notification mail are separate delivery paths.
 5. Keep `CFH_DEMO_MODE=false`. Rebuild after changing public environment values.
 6. Verify anonymous, member A, member B, and independent maintainer sessions through the hosted application and Data API. Test private data isolation, role escalation, claim races, hidden conversations, rate limits, current-submission review, revoked sessions, and sign-out.
 7. Run provider security advisors and rehearse backup recovery. Enable shared participation only after the harness reviewer and owner accept the evidence.

@@ -3,6 +3,7 @@ import { LoginForm } from "@/components/login-form";
 import { isDemo, configured } from "@/lib/supabase";
 import { safeNext } from "@/lib/filters";
 import Link from "next/link";
+import { githubAuthEnabled } from "@/lib/account-readiness";
 export const metadata = { title: "Join the work" };
 export default async function Login({
   searchParams,
@@ -11,14 +12,17 @@ export default async function Login({
 }) {
   const p = await searchParams;
   const disabled = isDemo() || !configured();
+  const next = safeNext(p.next);
+  const joining = next.split(/[?#]/, 1)[0] === "/join";
   return (
     <div className="page-content">
       <PageIntro
         eyebrow="WELCOME TO THE WORK"
-        title="A contribution begins with you."
+        title={joining ? "Join the community." : "A contribution begins with you."}
       >
-        Read everything publicly. Sign in to claim work, submit a proposal, and
-        keep a meaningful record of your contributions.
+        {joining
+          ? "Verify your email to create an account or sign in. Then finish your contributor profile."
+          : "Read everything publicly. Sign in to claim work, submit a proposal, and keep a meaningful record of your contributions."}
       </PageIntro>
       {disabled && (
         <div className="notice">
@@ -32,7 +36,7 @@ export default async function Login({
           The sign-in link could not be verified. Please request a new link.
         </div>
       )}
-      <LoginForm next={safeNext(p.next)} disabled={disabled} />
+      <LoginForm next={next} intent={joining ? "signup" : "signin"} disabled={disabled} githubEnabled={githubAuthEnabled(process.env.CFH_GITHUB_AUTH_ENABLED)} />
       <p className="auth-create-link">
         New to the community? <Link href="/join">Create your profile →</Link>
       </p>

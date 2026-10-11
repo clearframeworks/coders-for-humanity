@@ -19,7 +19,7 @@ export function GitHubReviewQueue({ github }: { github: GitHubData }) {
         comment.
       </p>
       <p className="hub-meta">
-        Public repository · refreshes about every two minutes
+        Public repository · cached for up to ten minutes · check details for the three newest changes
       </p>
       {github.error && (
         <div className="notice" role="status">
@@ -40,6 +40,24 @@ export function GitHubReviewQueue({ github }: { github: GitHubData }) {
               <h3>
                 <a href={pull.html_url}>{pull.title}</a>
               </h3>
+              {pull.checks ? (
+                <div>
+                  <p><strong>{pull.checks.label}</strong> · commit <code>{pull.checks.sha.slice(0, 7)}</code></p>
+                  <ul aria-label={`Checks for pull request ${pull.number}`}>
+                    {pull.checks.checks.map((check, index) => (
+                      <li key={`${check.name}-${index}`}>
+                        {check.url ? <a href={check.url}>{check.name}</a> : check.name}: {check.state.replaceAll("_", " ")}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="hub-meta">
+                    {pull.checks.deployment ? <>
+                      Vercel deployment report: {pull.checks.deployment.state}.{" "}
+                      {pull.checks.deployment.url && <a href={pull.checks.deployment.url}>Open deployment details</a>}
+                    </> : "No Vercel deployment report is available for this commit."}
+                  </p>
+                </div>
+              ) : <p className="hub-meta">Open GitHub to check the current commit and deployment.</p>}
               <div className="hub-row repository-review-actions">
                 <a className="button" href={`${pull.html_url}/files`}>
                   Read the diff <ArrowUpRight size={14} />
@@ -62,7 +80,8 @@ export function GitHubReviewQueue({ github }: { github: GitHubData }) {
       ) : null}
       <p className="form-help">
         This list does not grant approval or release access. GitHub enforces the
-        repository’s checks and independent review requirements.
+        repository’s required checks and owner review policy. Reported checks
+        and deployment status do not establish merge approval or a production release.
       </p>
     </section>
   );

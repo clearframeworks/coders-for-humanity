@@ -6,13 +6,15 @@ Visitors enter `/join` from the header, sidebar, homepage, People directory, log
 
 An unconnected installation allows profile preparation and preview only. It identifies this before onboarding begins and never reports that an account or shared profile was created. No database credentials or provisioning changes are included in this release.
 
-When the dedicated Supabase service is configured, a new contributor verifies their email or signs in with GitHub, returns to `/join`, reviews the browser draft, and explicitly creates the profile. Email registration uses `shouldCreateUser: true`; existing-account email sign-in uses `false`. Existing profiles go to `/account`. Email verification should be completed in the same browser so the local draft and PKCE session are available. Another browser can start a new draft after authentication.
+When the CFH Supabase schema and Auth are configured, a new contributor verifies their email, returns to `/join`, reviews the browser draft, and explicitly creates the profile. GitHub sign-in is shown and accepted only when `CFH_GITHUB_AUTH_ENABLED=true`; enable it only after the provider and exact callback work. Email registration uses `shouldCreateUser: true`; existing-account email sign-in uses `false`. Existing profiles go to `/account`. Email verification should be completed in the same browser so the local draft and PKCE session are available. Another browser can start a new draft after authentication.
+
+Before starting authentication, the server performs a bounded CFH data read. An absent schema, permission error, or database outage returns a recoverable error and does not initiate authentication. This check does not prove database write access or email delivery; those still require hosted acceptance tests. The application never treats environment variables alone as proof that registration works.
 
 The save operation uses verified `auth.getUser()`, existing origin validation, shared schema validation, and owner-only database policies. No role, review, moderation, or deployment permission is granted by signup. Public directory placement is opt-in. Username uniqueness is enforced at save, not claimed by the preview.
 
 ## Remaining hosted verification
 
-Dedicated Supabase provisioning requires the owner's organization choice and provider cost confirmation. Once provisioned, configure production and staging callback URLs, email delivery and GitHub OAuth; apply and audit the migrations; then verify real signup, callback recovery, duplicate handles, private/public directory visibility, and editing under two distinct accounts. Local policy tests do not substitute for this hosted auth check.
+On October 3, 2026 the owner chose the existing `retehost-cfw` project with CFH data in separate schemas. See `supabase/shared/README.md` for the isolated migration and the current read-only database blocker. After that blocker is resolved, configure exact callback URLs and email delivery, verify any enabled OAuth provider, apply and audit the shared-schema migration, and exercise real signup and two-user isolation. Local policy tests do not substitute for hosted auth checks.
 
 ## Photography
 
@@ -20,4 +22,4 @@ Four real photographs replace the homepage decoration and project card artwork, 
 
 ## Release path
 
-This change uses a feature branch and preview. Main requires the three CI checks and independent code-owner approval; branch protection must remain enabled. A review must not be replaced by direct production promotion.
+This change uses a feature branch and preview. Main requires the three CI checks. The owner has final release authority under `docs/owner-authority.md`; everyone else requires owner approval or explicit delegation.

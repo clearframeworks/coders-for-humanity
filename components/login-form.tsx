@@ -5,17 +5,19 @@ export function LoginForm({
   next,
   disabled,
   intent = "signin",
+  githubEnabled = false,
 }: {
   next: string;
   disabled: boolean;
   intent?: "signin" | "signup";
+  githubEnabled?: boolean;
 }) {
   const [state, action, pending] = useActionState(signIn, {});
   return (
     <form action={action} className="auth-card">
       <input type="hidden" name="next" value={next} />
       <input type="hidden" name="intent" value={intent} />
-      <button
+      {githubEnabled && <><button
         className="button primary"
         name="provider"
         value="github"
@@ -24,7 +26,7 @@ export function LoginForm({
       >
         Continue with GitHub ↗
       </button>
-      <div className="auth-divider">OR USE YOUR EMAIL</div>
+      <div className="auth-divider">OR USE YOUR EMAIL</div></>}
       <div className="field">
         <label htmlFor="email">Email address</label>
         <input
@@ -56,6 +58,7 @@ export function LoginForm({
         </div>
       )}
       <p className="form-help">
+        {intent === "signup" && "New here? Your verification link creates your account. Already a member? The same link signs you in. "}
         No password to remember. Your email address is never included in your
         public profile.
       </p>

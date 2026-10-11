@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getCatalog } from "@/lib/catalog";
 import { PageIntro, DemoNote } from "@/components/ui";
 import { WorkBoard } from "@/components/work-board";
@@ -18,6 +19,7 @@ export default async function Work({
         objective, acceptance criteria, and a path to review.
       </PageIntro>
       {catalog.demo && <DemoNote />}
+      <div className="hub-row"><Link className="button" href="/work/new">Develop a task</Link></div>
       <WorkBoard catalog={catalog} params={params} path="/work" />
     </div>
   );

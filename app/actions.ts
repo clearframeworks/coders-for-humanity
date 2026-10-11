@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient, configured, isDemo } from "@/lib/supabase";
 import { proposalSchema, profileSchema } from "@/lib/validation";
 import { safeNext } from "@/lib/filters";
+import { accountDataAvailable, githubAuthEnabled } from "@/lib/account-readiness";
 export type ActionState = { error?: string; message?: string; id?: string };
 function siteUrl() {
   const url = process.env.NEXT_PUBLIC_SITE_URL;
@@ -135,9 +136,15 @@ export async function signIn(
   try {
     await checkOrigin();
     const db = await createClient();
+    // Do not send people through email verification into an absent CFH schema.
+    // This read cannot certify writes; hosted signup still needs acceptance testing.
+    if (!(await accountDataAvailable(() => db.from("programs").select("id").limit(1).abortSignal(AbortSignal.timeout(5000)))))
+      return { error: "Member accounts are temporarily unavailable. Your profile draft is safe in this browser. Please try again later." };
     const next = safeNext(String(form.get("next") || ""));
     const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`;
     if (form.get("provider") === "github") {
+      if (!githubAuthEnabled(process.env.CFH_GITHUB_AUTH_ENABLED))
+        return { error: "GitHub sign-in is not available. Please use your email address." };
       const { data, error } = await db.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: callback, scopes: "read:user" },
@@ -154,6 +161,7 @@ export async function signIn(
         options: {
           emailRedirectTo: callback,
           shouldCreateUser: form.get("intent") === "signup",
+          data: { signup_platform: "coders-for-humanity" },
         },
       });
       if (error)
@@ -163,11 +171,13 @@ export async function signIn(
         };
       return {
         message:
-          "Check your email for a sign-in link. It will return you to this site.",
+          form.get("intent") === "signup"
+            ? "Check your email for a verification link. Open it in this browser, then finish creating your profile."
+            : "Check your email for a sign-in link. It will return you to this site.",
       };
     }
-  } catch (e) {
-    return { error: message(e) };
+  } catch {
+    return { error: "Sign-in could not be started. Please reload the page and try again." };
   }
   if (destination) redirect(destination);
   return {};

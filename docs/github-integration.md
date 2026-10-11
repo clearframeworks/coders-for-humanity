@@ -10,7 +10,7 @@ The dedicated Vercel project `prj_K7Gr8c6SjKw4OtkJClmOcTNWpriB` is linked to Git
 
 ## Implemented public read adapter
 
-`lib/github.ts` reads public metadata for the fixed CFH repository, then independently requests up to 50 open issues, 50 open pull requests, and 12 recent commits. Pull requests returned by the issues endpoint are excluded from the issue list. Requests have an eight-second timeout and a two-minute framework revalidation interval; request-scoped caching avoids redundant reads in one render.
+`lib/github.ts` reads public metadata for the fixed CFH repository, then independently requests up to 50 open issues, 50 open pull requests, and 12 recent commits. Pull requests returned by the issues endpoint are excluded from the issue list. It also reads current-head check runs and commit statuses for up to three listed pull requests. Requests have an eight-second timeout and a ten-minute framework revalidation interval; request-scoped caching avoids redundant reads in one render. The review panel identifies the inspected head SHA, distinguishes incomplete results from passed checks, and attributes deployment reports only to Vercel's status sender. It does not infer merge approval or production promotion.
 
 The adapter uses the public GitHub API without stored contributor credentials. It renders actual records or an explicit unavailable/empty state. Public API rate limits can prevent a read, and an empty repository can have no commit history. Neither condition justifies sample activity or an invented contribution count.
 
