@@ -5,7 +5,7 @@ test("a task link preselects a plan without replacing notebook contents", async 
 }) => {
   await page.goto("/work/cf100000-0000-4000-8000-000000000004");
   await page.getByRole("link", { name: "Plan this task", exact: true }).click();
-  await expect(page.getByLabel("Start from a founding task")).toHaveValue(
+  await expect(page.getByLabel("Start from a task")).toHaveValue(
     "cf100000-0000-4000-8000-000000000004",
   );
   await expect(page.getByLabel("Handoff title", { exact: true })).toHaveValue(
@@ -16,7 +16,7 @@ test("a task link preselects a plan without replacing notebook contents", async 
     "Task: Write the first human maintainer handoff",
   );
   await page.goto("/workspace?task=not-a-founding-task");
-  await expect(page.getByLabel("Start from a founding task")).toHaveValue("");
+  await expect(page.getByLabel("Start from a task")).toHaveValue("");
 });
 
 test("founding tasks prefill a local plan and never replace a draft silently", async ({
@@ -24,7 +24,7 @@ test("founding tasks prefill a local plan and never replace a draft silently", a
 }) => {
   await page.goto("/workspace");
 
-  const taskPicker = page.getByLabel("Start from a founding task");
+  const taskPicker = page.getByLabel("Start from a task");
   await taskPicker.selectOption(
     "cf100000-0000-4000-8000-000000000004",
   );

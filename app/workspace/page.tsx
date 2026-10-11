@@ -5,7 +5,11 @@ import { CommunityConnectionNote } from "@/components/community-feed";
 import { communityReady, getViewer } from "@/lib/community";
 import { createClient } from "@/lib/supabase";
 import { WorkspaceNotebook } from "@/components/workspace-notebook";
-import { humanWork } from "@/lib/harness";
+import { getCatalog } from "@/lib/catalog";
+import {
+  findPlanningTask,
+  type WorkspacePlanningTask,
+} from "@/lib/workspace-planning";
 import { ReleaseClaim } from "@/components/release-claim";
 export const metadata = { title: "My workspace" };
 type Assigned = {
@@ -30,13 +34,40 @@ export default async function Workspace({
 }: {
   searchParams?: Promise<{ task?: string | string[] }>;
 }) {
-  const taskParam = (await searchParams)?.task;
+  const [catalog, query, viewer] = await Promise.all([
+    getCatalog().catch(() => undefined),
+    searchParams,
+    getViewer(),
+  ]);
+  const taskLoadFailed = !catalog;
+  const planningTasks: WorkspacePlanningTask[] = (catalog?.tasks ?? []).map(
+    ({
+      id,
+      is_demo,
+      title,
+      effort,
+      objective,
+      context,
+      acceptance,
+      dependencies,
+      reviewer,
+    }) => ({
+      id,
+      is_demo,
+      title,
+      effort,
+      objective,
+      context,
+      acceptance,
+      dependencies,
+      reviewer,
+    }),
+  );
+  const taskParam = query?.task;
   const initialTaskId =
-    typeof taskParam === "string" &&
-    humanWork.some((task) => task.id === taskParam)
-      ? taskParam
+    typeof taskParam === "string"
+      ? findPlanningTask(planningTasks, taskParam)?.id
       : undefined;
-  const viewer = await getViewer();
   if (!viewer)
     return (
       <div className="page-content">
@@ -51,7 +82,11 @@ export default async function Workspace({
             projects and assigned work.
           </div>
         )}
-        <WorkspaceNotebook initialTaskId={initialTaskId} />
+        <WorkspaceNotebook
+          initialTaskId={initialTaskId}
+          planningTasks={planningTasks}
+          taskLoadFailed={taskLoadFailed}
+        />
         <div className="hub-grid">
           <section className="hub-panel">
             <span className="eyebrow">01 / FIND YOUR PLACE</span>
@@ -144,7 +179,11 @@ export default async function Workspace({
           Review queue
         </Link>
       </div>
-      <WorkspaceNotebook initialTaskId={initialTaskId} />
+      <WorkspaceNotebook
+        initialTaskId={initialTaskId}
+        planningTasks={planningTasks}
+        taskLoadFailed={taskLoadFailed}
+      />
       <section className="hub-stack">
         <h2>My commitments</h2>
         {tasks.length ? (

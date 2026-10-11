@@ -82,7 +82,12 @@ export default async function TaskPage({
         </section>
         {handoffs.length > 0 && <section><h2>Contributor handoffs</h2>{handoffs.map((handoff) => <article className="hub-panel" key={handoff.id}><time dateTime={handoff.created_at}>{new Date(handoff.created_at).toLocaleDateString("en", { timeZone: "UTC" })}</time><p style={{ whiteSpace: "pre-wrap" }}>{handoff.body}</p></article>)}</section>}
         {communityReady() ? (
-          <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
+          <div className="hub-stack">
+            <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
+            <Link className="text-link" href={`/workspace?task=${t.id}`}>
+              Plan this task
+            </Link>
+          </div>
         ) : (
           <section>
             <h2>Prepare your contribution</h2>

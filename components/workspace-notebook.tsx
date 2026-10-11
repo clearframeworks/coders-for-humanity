@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { humanWork } from "@/lib/harness";
+import {
+  createTaskPlan,
+  findPlanningTask,
+  type WorkspacePlanningTask,
+} from "@/lib/workspace-planning";
 import {
   handoffDraftStorageKey,
   readHandoffDraft,
@@ -98,8 +102,12 @@ function markdown(note: Handoff) {
 
 export function WorkspaceNotebook({
   initialTaskId,
+  planningTasks,
+  taskLoadFailed,
 }: {
   initialTaskId?: string;
+  planningTasks: WorkspacePlanningTask[];
+  taskLoadFailed: boolean;
 }) {
   const [notes, setNotes] = useState<Handoff[]>([]);
   const [draft, setDraft] = useState<Handoff>(emptyNote);
@@ -222,7 +230,7 @@ export function WorkspaceNotebook({
     if (ready) persistRecovery(next);
   }
   function loadTaskPlan() {
-    const task = humanWork.find((item) => item.id === selectedTaskId);
+    const task = findPlanningTask(planningTasks, selectedTaskId);
     if (!task) return;
     const hasDraftContent = Object.values(draft).some(
       (value) => value.trim().length > 0,
@@ -242,18 +250,7 @@ export function WorkspaceNotebook({
       );
       return;
     }
-    const taskDraft = {
-      ...emptyNote,
-      title: `Task: ${task.title}`,
-      context: [
-        `Task brief: https://cfh.retehost.com/work/${task.id}`,
-        `Objective: ${task.objective}`,
-        `Current context: ${task.context}`,
-        `Acceptance criteria: ${task.acceptance}`,
-        `Dependencies: ${task.dependencies}`,
-      ].join("\n\n"),
-      reviewer: task.reviewer,
-    };
+    const taskDraft = { ...emptyNote, ...createTaskPlan(task) };
     setDraft(taskDraft);
     setDirty(true);
     const recovered = persistRecovery(taskDraft);
@@ -294,17 +291,24 @@ export function WorkspaceNotebook({
         information out.
       </p>
       <div className="form-shell">
+        {taskLoadFailed && (
+          <p role="status" className="form-help">
+            Task briefs could not be loaded. Your local handoffs are still
+            available to edit, save, and export.
+          </p>
+        )}
         <div className="field">
-          <label htmlFor="handoff-task">Start from a founding task</label>
+          <label htmlFor="handoff-task">Start from a task</label>
           <select
             id="handoff-task"
             value={selectedTaskId}
             onChange={(event) => setSelectedTaskId(event.target.value)}
           >
-            <option value="">Choose a real task to plan around</option>
-            {humanWork.map((task) => (
+            <option value="">Choose a task to plan around</option>
+            {planningTasks.map((task) => (
               <option key={task.id} value={task.id}>
-                {task.title} · {task.effort}
+                {task.title}
+                {task.is_demo ? " (Example)" : ""} · {task.effort}
               </option>
             ))}
           </select>
