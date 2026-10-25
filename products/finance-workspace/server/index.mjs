@@ -1,3 +1,4 @@
+import {resolveRuntimeDir} from './runtime-path.mjs';
 import {categoryForHistory} from '../dist/spending-plan.mjs';
 import {projectForecast} from '../dist/projection.mjs';
 import http from 'node:http';
@@ -25,7 +26,7 @@ async function jsonBody(req) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new InputError('Request body must contain valid JSON.'); }
 }
 
-export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0.0' : '127.0.0.1', lanAddresses, now = Date.now, runtimeDir = path.join(ROOT, 'runtime'), distDir = path.join(ROOT, 'dist'), intervalMs = 60000, initialState, autoCollect = true, autoBankSync = true, bankOptions = {}} = {}) {
+export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0.0' : '127.0.0.1', lanAddresses, now = Date.now, runtimeDir = resolveRuntimeDir(), distDir = path.join(ROOT, 'dist'), intervalMs = 60000, initialState, autoCollect = true, autoBankSync = true, bankOptions = {}} = {}) {
   if (typeof lan !== 'boolean') throw new Error('LAN mode must be explicitly true or false.');
   if (!['127.0.0.1', '::1', ...(lan ? ['0.0.0.0'] : [])].includes(host)) throw new Error('Finance service must bind to loopback unless LAN mode is explicitly enabled.');
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Choose a port from 0 to 65535.');
@@ -152,7 +153,7 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const addresses = process.env.FINANCE_LAN_ADDRESSES;
-  const service = await startServer({port: Number(process.env.FINANCE_PORT || 4317), lan: process.env.FINANCE_LAN === '1', ...(addresses !== undefined ? {lanAddresses: addresses.split(',').map(value => value.trim()).filter(Boolean)} : {}), runtimeDir: process.env.FINANCE_RUNTIME_DIR || path.join(ROOT, 'runtime'), intervalMs: Number(process.env.FINANCE_IMPORT_INTERVAL_MS || 60000)});
+  const service = await startServer({port: Number(process.env.FINANCE_PORT || 4317), lan: process.env.FINANCE_LAN === '1', ...(addresses !== undefined ? {lanAddresses: addresses.split(',').map(value => value.trim()).filter(Boolean)} : {}), runtimeDir: resolveRuntimeDir(), intervalMs: Number(process.env.FINANCE_IMPORT_INTERVAL_MS || 60000)});
   console.log(`Finance workspace: ${service.url}`);
   console.log(`SQLite storage and CSV inbox: ${service.store.runtimeDir}`);
   if (process.env.FINANCE_LAN === '1') {

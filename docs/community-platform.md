@@ -26,6 +26,7 @@ Local notes are not encrypted, synchronized, submitted, or approved. Browser dat
 Use Node.js 22 or newer and npm. The public foundation requires no database.
 
 ```powershell
+cd apps/community-platform
 npm ci
 Copy-Item .env.example .env.local
 npm run dev
@@ -66,6 +67,8 @@ Profiles are private until the contributor opts into publication. Project member
 
 ## Verification
 
+Run these commands from `apps/community-platform`.
+
 ```powershell
 npm run typecheck
 npm test
@@ -81,6 +84,8 @@ Browser checks cover the public journeys, drafts, notebook, themes, mobile navig
 
 ## Source map
 
+Application paths below are relative to `apps/community-platform`. Repository documentation is in `../../docs/`.
+
 | Path | Responsibility |
 | --- | --- |
 | `app/` | Public rooms, authenticated workspaces, server actions, and routes |
@@ -91,9 +96,9 @@ Browser checks cover the public journeys, drafts, notebook, themes, mobile navig
 | `lib/harness.ts` | Founding tasks and release policy model |
 | `supabase/migrations/` | Normalized data, access rules, protected actions, and real founding records |
 | `tests/` | Domain, database, browser, and accessibility verification |
-| `docs/` | Operating boundaries, release evidence, and human handoff |
+| `../../docs/` | Operating boundaries, release evidence, and human handoff |
 
-The shared-workspace design and scale roadmap are in [architecture.md](architecture.md). The repository boundary is in [github-integration.md](github-integration.md). Read [SECURITY.md](../SECURITY.md), [GOVERNANCE.md](../GOVERNANCE.md), and [the harness charter](harness-team.md) before changing authority.
+The shared-workspace design and scale roadmap are in [architecture.md](architecture.md). The repository boundary is in [github-integration.md](github-integration.md). Read [SECURITY.md](../SECURITY.md), [GOVERNANCE.md](governance.md), and [the harness charter](harness-team.md) before changing authority.
 
 ## License and evidence
 

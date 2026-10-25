@@ -1,0 +1,70 @@
+name: Windows finance installer
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'products/finance-workspace/**'
+      - 'tools/build-finance-installer.ps1'
+      - 'tools/build-product-downloads.py'
+      - '.github/workflows/finance-installer.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'products/finance-workspace/**'
+      - 'tools/build-finance-installer.ps1'
+      - 'tools/build-product-downloads.py'
+      - '.github/workflows/finance-installer.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: finance-installer-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - name: Install verified compiler in the temporary build directory
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $compilerSetup = Join-Path $env:RUNNER_TEMP 'innosetup-6.7.3.exe'
+          Invoke-WebRequest -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -OutFile $compilerSetup
+          if ((Get-FileHash -LiteralPath $compilerSetup -Algorithm SHA256).Hash -ne '9C73C3BAE7ED48D44112A0F48E66742C00090BDB5BEF71D9D3C056C66E97B732') { throw 'Compiler setup checksum mismatch.' }
+          $signature = Get-AuthenticodeSignature -LiteralPath $compilerSetup
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Pyrsys') { throw 'Compiler setup publisher verification failed.' }
+          $compilerDirectory = Join-Path $env:RUNNER_TEMP 'finance-inno'
+          $process = Start-Process -FilePath $compilerSetup -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/PORTABLE=1','/CURRENTUSER',('/DIR="'+$compilerDirectory+'"')) -WindowStyle Hidden -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Compiler setup failed: $($process.ExitCode)" }
+          "FINANCE_COMPILER=$compilerDirectory/ISCC.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Test application source
+        run: npm test --prefix products/finance-workspace
+      - name: Build installer with bundled runtime
+        run: |
+          ./tools/build-finance-installer.ps1 -CompilerPath $env:FINANCE_COMPILER -WorkDirectory (Join-Path $env:RUNNER_TEMP 'finance-installer-stage') -OutputDirectory (Join-Path $env:RUNNER_TEMP 'finance-installer-artifacts')
+      - name: Verify install, active upgrade, uninstall and data recovery
+        run: |
+          ./products/finance-workspace/installer/test-install.ps1 -InstallerPath (Join-Path $env:RUNNER_TEMP 'finance-installer-artifacts/Your-Finances-Setup-1.0.0-x64.exe') -TestRoot (Join-Path $env:RUNNER_TEMP 'finance-installer-lifecycle')
+      - name: Save installer, checksums and lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: Your-finances-Windows-x64
+          path: |
+            ${{ runner.temp }}/finance-installer-artifacts/*
+            ${{ runner.temp }}/finance-installer-lifecycle/*.log
+            ${{ runner.temp }}/finance-installer-lifecycle/verification.txt
+          if-no-files-found: warn
+          retention-days: 14

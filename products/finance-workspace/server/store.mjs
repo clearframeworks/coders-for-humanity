@@ -1,15 +1,14 @@
+import {resolveRuntimeDir} from './runtime-path.mjs';
 import {categoryForHistory} from '../dist/spending-plan.mjs';
 import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync} from 'node:fs';
 import {readdir, readFile, stat, rename, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
-import {fileURLToPath} from 'node:url';
 import {parseTransactions, mergeTransactions} from '../dist/engine.mjs';
 import {InputError, validateState} from './validation.mjs';
 import {reconcileEmailHistory} from './email-alerts.mjs';
 
-const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 export function defaultState() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', {timeZone: process.env.FINANCE_TIME_ZONE || 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(new Date()).map(part => [part.type, part.value]));
   const date = `${parts.year}-${parts.month}-${parts.day}`;
@@ -17,7 +16,7 @@ export function defaultState() {
 }
 
 export class Store {
-  constructor({runtimeDir = path.join(APP_ROOT, 'runtime'), initialState} = {}) {
+  constructor({runtimeDir = resolveRuntimeDir(), initialState} = {}) {
     this.runtimeDir = path.resolve(runtimeDir);
     this.inboxPath = path.join(this.runtimeDir, 'inbox');
     this.archivePath = path.join(this.runtimeDir, 'archive');

@@ -7,7 +7,8 @@ test("free software has a dedicated page and a complete download", async ({ page
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Know what your money needs to cover.");
   await page.screenshot({ path: testInfo.outputPath("finance-desktop.png"), fullPage: true });
   await expect(page.getByRole("link", { name: "Browse the full source" })).toHaveAttribute("href", /github.com\/clearframeworks\/coders-for-humanity\/tree\/main\/products\/finance-workspace/);
-  const link = page.getByRole("link", { name: "Download Your finances (.zip)" });
+  await expect(page.getByRole("link", { name: "Download for Windows (.exe)" })).toHaveAttribute("href", /releases\/download\/finance-v1\.0\.0\/Your-Finances-Setup-1\.0\.0-x64\.exe$/);
+  const link = page.getByRole("link", { name: "Full source (.zip)" });
   const zip = await request.get((await link.getAttribute("href"))!);
   expect(zip.ok()).toBeTruthy();
   const content = await zip.body();

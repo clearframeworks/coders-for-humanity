@@ -1,15 +1,24 @@
 param([switch]$NoBrowser, [switch]$ForcePortableNode, [ValidateRange(1024,65535)][int]$Port = 4318)
+# A shortcut may inherit PowerShell 7's module path. Restore this process's
+# Windows PowerShell built-ins before any command relies on module autoloading.
+if ($PSVersionTable.PSEdition -eq 'Desktop') {
+  $financeWindowsModules = [IO.Path]::Combine($PSHOME, 'Modules')
+  $env:PSModulePath = $financeWindowsModules + [IO.Path]::PathSeparator + $env:PSModulePath
+}
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
-$financeRuntime = Join-Path $PSScriptRoot 'runtime'
+. (Join-Path $PSScriptRoot 'Finance-Paths.ps1')
+$financePaths = Get-FinancePaths -AppRoot $PSScriptRoot
+$financeRuntime = $financePaths.Runtime
 New-Item -ItemType Directory -Path $financeRuntime -Force | Out-Null
 $financeHasher = [System.Security.Cryptography.SHA256]::Create()
 try { $financeId = ([BitConverter]::ToString($financeHasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($PSScriptRoot.ToLowerInvariant())))).Replace('-', '').ToLowerInvariant() } finally { $financeHasher.Dispose() }
+$financeAutomaticPort = $financePaths.Installed -and -not $PSBoundParameters.ContainsKey('Port')
+$financeSelection = Resolve-FinanceLaunchPort -Runtime $financeRuntime -InstallationId $financeId -Port $Port -Automatic:$financeAutomaticPort
+$Port = $financeSelection.Port
 $financeUrl = "http://127.0.0.1:$Port"
-$financeHealth = $null
-try { $financeHealth = Invoke-RestMethod "$financeUrl/api/health" -TimeoutSec 2 } catch {}
-if ($financeHealth) {
-  if ($financeHealth.installationId -ne $financeId) { throw "Port $Port belongs to another service. Close that service or run this launcher with -Port followed by an unused port." }
+if ($financeSelection.Ready) {
+  Set-Content -LiteralPath (Join-Path $financeRuntime 'service.port') -Value $Port -Encoding ascii
   if (-not $NoBrowser) { Start-Process $financeUrl }
   Write-Host "Your finances is ready at $financeUrl"
   exit 0
@@ -19,8 +28,14 @@ function Test-FinanceNode([string]$NodePath) {
   try { $financeVersion = & $NodePath --version; return $LASTEXITCODE -eq 0 -and [int]($financeVersion.TrimStart('v').Split('.')[0]) -ge 24 } catch { return $false }
 }
 $financeNode = $null
+$financeBundled = Join-Path $PSScriptRoot 'vendor/node/node.exe'
+if ($financePaths.Installed) {
+  if (-not (Test-Path -LiteralPath $financeBundled) -or (Get-FileHash -LiteralPath $financeBundled -Algorithm SHA256).Hash.ToLowerInvariant() -ne '63c259c81e5d472b5f11c8d506070130cb04a1ecf84b80377a34ed6ec9048088') { throw 'The bundled runtime is missing or damaged. Run the installer again. Your saved data will be kept.' }
+  if (-not (Test-FinanceNode $financeBundled)) { throw 'The bundled runtime cannot start on this computer.' }
+  $financeNode = $financeBundled
+}
 $financeInstalled = Get-Command node -ErrorAction SilentlyContinue
-if (-not $ForcePortableNode -and $financeInstalled -and (Test-FinanceNode $financeInstalled.Source)) { $financeNode = $financeInstalled.Source }
+if (-not $financeNode -and -not $ForcePortableNode -and $financeInstalled -and (Test-FinanceNode $financeInstalled.Source)) { $financeNode = $financeInstalled.Source }
 if (-not $financeNode) {
   $financeArchitecture = $env:PROCESSOR_ARCHITEW6432
   if (-not $financeArchitecture) { $financeArchitecture = $env:PROCESSOR_ARCHITECTURE }
@@ -45,24 +60,48 @@ if (-not $financeNode) {
     if (-not (Test-FinanceNode $financeNode)) { throw 'Node.js could not start. Check that your computer permits running downloaded apps.' }
   }
 }
-$financePrevious = @{}
-foreach ($financeKey in @('FINANCE_PORT','FINANCE_RUNTIME_DIR','FINANCE_LAN','FINANCE_LAN_ADDRESSES','FINANCE_INSTALLATION_ID')) { $financePrevious[$financeKey] = [Environment]::GetEnvironmentVariable($financeKey, 'Process') }
-try {
-  $env:FINANCE_PORT = [string]$Port
-  $env:FINANCE_RUNTIME_DIR = $financeRuntime
-  $env:FINANCE_LAN = '0'
-  $env:FINANCE_LAN_ADDRESSES = ''
-  $env:FINANCE_INSTALLATION_ID = $financeId
-  $financeProcess = Start-Process -FilePath $financeNode -ArgumentList @(('"' + (Join-Path $PSScriptRoot 'server/index.mjs') + '"')) -WorkingDirectory $PSScriptRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $financeRuntime 'service.log') -RedirectStandardError (Join-Path $financeRuntime 'service-error.log') -PassThru
-} finally { foreach ($financeKey in $financePrevious.Keys) { [Environment]::SetEnvironmentVariable($financeKey, $financePrevious[$financeKey], 'Process') } }
-Set-Content -LiteralPath (Join-Path $financeRuntime 'service.pid') -Value $financeProcess.Id -Encoding ascii
+$financeTriedPorts = @()
 $financeReady = $false
-for ($financeTry = 0; $financeTry -lt 60; $financeTry++) {
-  try { $financeReady = (Invoke-RestMethod "$financeUrl/api/health" -TimeoutSec 1).installationId -eq $financeId } catch {}
-  if ($financeReady) { break }
-  if ($financeProcess.HasExited) { throw 'The app stopped. Check runtime/service-error.log, then start again.' }
-  Start-Sleep -Milliseconds 250
+for ($financeStartAttempt = 0; $financeStartAttempt -lt 21; $financeStartAttempt++) {
+  $financePrevious = @{}
+  foreach ($financeKey in @('FINANCE_PORT','FINANCE_RUNTIME_DIR','FINANCE_LAN','FINANCE_LAN_ADDRESSES','FINANCE_INSTALLATION_ID')) { $financePrevious[$financeKey] = [Environment]::GetEnvironmentVariable($financeKey, 'Process') }
+  try {
+    $env:FINANCE_PORT = [string]$Port
+    $env:FINANCE_RUNTIME_DIR = $financeRuntime
+    $env:FINANCE_LAN = '0'
+    $env:FINANCE_LAN_ADDRESSES = ''
+    $env:FINANCE_INSTALLATION_ID = $financeId
+    $financeProcess = Start-Process -FilePath $financeNode -ArgumentList @(('"' + (Join-Path $PSScriptRoot 'server/index.mjs') + '"')) -WorkingDirectory $PSScriptRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $financeRuntime 'service.log') -RedirectStandardError (Join-Path $financeRuntime 'service-error.log') -PassThru
+  } finally { foreach ($financeKey in $financePrevious.Keys) { [Environment]::SetEnvironmentVariable($financeKey, $financePrevious[$financeKey], 'Process') } }
+  for ($financeTry = 0; $financeTry -lt 60; $financeTry++) {
+    $financeProcess.Refresh()
+    if ($financeProcess.HasExited) { break }
+    try { $financeReady = (Invoke-RestMethod "$financeUrl/api/health" -TimeoutSec 1).installationId -eq $financeId } catch {}
+    if ($financeReady) { break }
+    Start-Sleep -Milliseconds 250
+  }
+  if ($financeReady) {
+    Set-Content -LiteralPath (Join-Path $financeRuntime 'service.pid') -Value $financeProcess.Id -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $financeRuntime 'service.port') -Value $Port -Encoding ascii
+    break
+  }
+  $financeProcess.Refresh()
+  $financeStartError = Get-Content -LiteralPath (Join-Path $financeRuntime 'service-error.log') -Raw -ErrorAction SilentlyContinue
+  if ($financeAutomaticPort -and $financeProcess.HasExited -and $financeStartError -match 'EADDRINUSE') {
+    $financeTriedPorts += $Port
+    $financeSelection = Resolve-FinanceLaunchPort -Runtime $financeRuntime -InstallationId $financeId -Automatic -ExcludedPorts $financeTriedPorts
+    $Port = $financeSelection.Port
+    $financeUrl = "http://127.0.0.1:$Port"
+    if ($financeSelection.Ready) {
+      Set-Content -LiteralPath (Join-Path $financeRuntime 'service.port') -Value $Port -Encoding ascii
+      $financeReady = $true
+      break
+    }
+    continue
+  }
+  if (-not $financeProcess.HasExited) { Stop-Process -InputObject $financeProcess -ErrorAction SilentlyContinue }
+  throw "The app did not start. Check $financeRuntime/service-error.log, then start again."
 }
-if (-not $financeReady) { throw 'The app did not become ready. Check runtime/service-error.log, then start again.' }
-Write-Host "Your finances is ready at $financeUrl. Your data stays in this app's runtime folder."
+if (-not $financeReady) { throw "The app did not become ready. Check $financeRuntime/service-error.log, then start again." }
+Write-Host "Your finances is ready at $financeUrl. Your data stays in $financeRuntime."
 if (-not $NoBrowser) { Start-Process $financeUrl }
