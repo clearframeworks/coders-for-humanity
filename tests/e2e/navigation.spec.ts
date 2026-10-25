@@ -4,6 +4,10 @@ test("search shortcuts work without hijacking typing in a form", async ({
   page,
 }) => {
   await page.goto("/");
+  await expect(page.locator(".search-link")).toHaveAttribute(
+    "aria-keyshortcuts",
+    "/ Control+k Meta+k",
+  );
   await page.keyboard.press("/");
   await expect(page).toHaveURL(/\/search$/);
   await expect(page.getByLabel("Search public information")).toBeFocused();
@@ -16,6 +20,10 @@ test("search shortcuts work without hijacking typing in a form", async ({
     ignoreCase: true,
   });
   await page.goto("/join");
+  await expect(page.locator(".search-link")).toHaveAttribute(
+    "aria-keyshortcuts",
+    "/ Control+k Meta+k",
+  );
   await page.getByLabel("Display name (required)").fill("Sam");
   await page.keyboard.press("/");
   await expect(page.getByLabel("Display name (required)")).toHaveValue("Sam/");

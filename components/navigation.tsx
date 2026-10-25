@@ -32,6 +32,7 @@ const groups = [
       ["Community", "/", LayoutDashboard],
       ["Conversations", "/discussions", MessagesSquare],
       ["Projects", "/projects", FolderGit2],
+      ["Free software", "/software", BookOpen],
       ["People", "/people", Users],
     ],
   },
@@ -140,6 +141,7 @@ export function Navigation() {
 }
 export function Topbar() {
   const router = useRouter();
+  const [shortcutsReady, setShortcutsReady] = useState(false);
   useEffect(() => {
     function searchShortcut(event: KeyboardEvent) {
       const target = event.target;
@@ -163,6 +165,7 @@ export function Topbar() {
       }
     }
     window.addEventListener("keydown", searchShortcut);
+    setShortcutsReady(true);
     return () => window.removeEventListener("keydown", searchShortcut);
   }, [router]);
   return (
@@ -175,7 +178,7 @@ export function Topbar() {
         <Link
           className="search-link"
           href="/search"
-          aria-keyshortcuts="/ Control+k Meta+k"
+          aria-keyshortcuts={shortcutsReady ? "/ Control+k Meta+k" : undefined}
         >
           <Search size={17} />
           <span>Search</span>
