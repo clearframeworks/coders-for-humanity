@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Local finance browser collector",
+  "version": "1.0.0",
+  "description": "Request official Cash App and Fifth Third CSV exports from your signed-in browser sessions.",
+  "permissions": ["alarms", "storage"],
+  "host_permissions": ["https://cash.app/account/*", "https://secure.53.com/olb/*"],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "action": {"default_popup": "popup.html", "default_title": "Finance collection"},
+  "content_scripts": [{"matches": ["https://cash.app/account/*", "https://secure.53.com/olb/*"], "js": ["content.js"], "run_at": "document_idle"}]
+}

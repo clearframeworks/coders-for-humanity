@@ -1,0 +1,22 @@
+.software-page { max-width: 1120px; }
+.software-heading { max-width: 780px; margin: 36px 0 44px; }
+.software-heading h1 { font-family: var(--serif); font-size: clamp(36px, 4.5vw, 58px); letter-spacing: -1.4px; margin-bottom: 22px; }
+.software-heading > p:not(.eyebrow):not(.software-detail) { font-size: 18px; line-height: 1.7; }
+.software-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 16px; }
+.software-detail { font-size: 13px; }
+.software-listing { display: flex; gap: 32px; align-items: center; justify-content: space-between; border-block: 1px solid var(--line); padding: 32px 0; }
+.software-listing > div { max-width: 640px; }
+.software-listing h2, .software-start h2, .software-columns h2, .software-source h2 { font-family: var(--serif); font-size: 29px; }
+.software-listing > .button { flex-shrink: 0; }
+.software-start { padding: 30px; background: var(--soft); border-left: 4px solid var(--green); }
+.software-start p:last-child, .software-source p:last-child { margin-bottom: 0; }
+.software-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin: 44px 0; }
+.software-columns ul { padding-left: 20px; color: var(--muted); }
+.software-columns li { margin-bottom: 12px; }
+.software-source { border-top: 1px solid var(--line); padding-top: 30px; max-width: 780px; }
+@media (max-width: 800px) {
+  .software-listing { align-items: flex-start; flex-direction: column; gap: 12px; }
+  .software-columns { grid-template-columns: 1fr; gap: 20px; }
+  .software-heading { margin-top: 26px; }
+  .software-start { padding: 22px; }
+}

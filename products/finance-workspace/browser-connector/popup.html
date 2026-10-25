@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Finance collection</title><link rel="stylesheet" href="popup.css"><script type="module" src="popup.js"></script></head>
+<body><h1>Finance collection</h1><p>A custom collector for your signed-in accounts' CSV exports. It is not endorsed by either provider. Collection starts only when you turn it on.</p>
+<section data-provider="cashapp"><h2>Cash App</h2><p class="status" role="status">Checking…</p><p class="last"></p><div><button class="start">Start every 15 min</button><button class="try">Try once</button><button class="stop">Stop</button></div><a href="https://cash.app/account/activity" target="_blank" rel="noreferrer">Open Cash App to sign in</a></section>
+<section data-provider="fifththird"><h2>Fifth Third</h2><p class="status" role="status">Checking…</p><p class="last"></p><div><button class="start">Start every 15 min</button><button class="try">Try once</button><button class="stop">Stop</button></div><a href="https://secure.53.com/olb/account/details/transactionExport" target="_blank" rel="noreferrer">Open Fifth Third to sign in</a></section>
+<p class="note">Keep Chrome and the local finance service running. Downloads go to your normal Downloads folder. The app verifies and imports each file separately; an export request does not confirm an import.</p><p id="error" role="alert"></p>
+</body></html>

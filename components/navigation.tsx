@@ -32,6 +32,7 @@ const groups = [
       ["Community", "/", LayoutDashboard],
       ["Conversations", "/discussions", MessagesSquare],
       ["Projects", "/projects", FolderGit2],
+      ["Free software", "/software", BookOpen],
       ["People", "/people", Users],
     ],
   },

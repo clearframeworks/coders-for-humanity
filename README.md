@@ -1,5 +1,16 @@
 # Coders for Humanity
 
+## Free software
+
+[Your finances](products/finance-workspace/) is a free local finance planner with
+complete source and a Windows quick-start launcher. [Download the app](https://github.com/clearframeworks/coders-for-humanity/raw/refs/heads/main/public/downloads/finance-workspace.zip),
+extract the ZIP, and double-click `Start-Finances.cmd` inside its folder.
+No account or AI subscription is required. Each product has its own folder under
+`products/` and landing page under `/software` on the CFH site.
+
+To regenerate the finance download after source changes, run
+`python scripts/build-product-downloads.py`; CI checks that it matches the source.
+
 A community workspace for people building public-interest projects together: shared context, useful contributions, independent review, and handoffs that let the next person continue.
 
 This source is the **public foundation**, not a demonstration catalogue. It contains one real founding project—the community platform itself—and seven unassigned work briefs with stable UUIDs. It does not invent members, conversations, completed contributions, impact, or funding.

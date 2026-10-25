@@ -79,6 +79,7 @@ export default async function Home({
             </div>
           </section>
           <nav className="hub-tabs" aria-label="Community view">
+            <Link href="/software">Free software ↗</Link>
             {[
               ["community", "Community"],
               ["work", "Open work"],
