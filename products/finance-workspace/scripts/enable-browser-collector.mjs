@@ -1,8 +1,8 @@
+import {resolveRuntimeDir} from '../server/runtime-path.mjs';
 import {mkdir, writeFile, realpath} from 'node:fs/promises';
 import {homedir} from 'node:os';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-const runtime = fileURLToPath(new URL('../runtime/',import.meta.url));
+const runtime = resolveRuntimeDir();
 const downloadsDir = await realpath(path.join(homedir(),'Downloads'));
 await mkdir(runtime,{recursive:true});
 await writeFile(path.join(runtime,'browser-collector.json'),JSON.stringify({enabled:process.argv[2]!=='--disable',downloadsDir,enabledAt:new Date().toISOString()}));

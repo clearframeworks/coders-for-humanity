@@ -1,12 +1,11 @@
+import {resolveRuntimeDir} from '../server/runtime-path.mjs';
 import {projectForecast} from '../dist/projection.mjs';
 import {createInterface} from 'node:readline';
 import {DatabaseSync} from 'node:sqlite';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
 import {forecast,addDays,isValidDate} from '../dist/engine.mjs';
 
-const root=fileURLToPath(new URL('../',import.meta.url));
-const dbPath=path.join(process.env.FINANCE_RUNTIME_DIR||path.join(root,'runtime'),'finance.sqlite');
+const dbPath=path.join(resolveRuntimeDir(),'finance.sqlite');
 const annotations={readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:false};
 const tools=[
   {name:'get_finance_summary',description:'Read the user-approved plan, account snapshot, transaction counts and cash-flow summary. Only use when the user requests finance analysis and has enabled AI access in the local app.',inputSchema:{type:'object',properties:{},additionalProperties:false}},

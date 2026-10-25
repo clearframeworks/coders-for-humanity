@@ -1,3 +1,5 @@
+![Coders for Humanity free software hub — useful software, yours to run](assets/hub-header.svg)
+
 # Free software hub
 
 Free, open-source software from Clear Frameworks and the Coders for Humanity community. Find an app, download its complete source, and use or adapt your own copy. You can work on the code yourself or with an AI assistant.
@@ -6,26 +8,38 @@ Free, open-source software from Clear Frameworks and the Coders for Humanity com
 
 | Software | What it does | Get it |
 | --- | --- | --- |
-| **[Your finances](products/finance-workspace/)** | A local planner for paydays, bills, transaction imports, and spending comparisons. No account or AI subscription required. | **[Download ZIP](https://github.com/clearframeworks/coders-for-humanity/raw/refs/heads/main/public/downloads/finance-workspace.zip)** · [Source](products/finance-workspace/) · [Product page](https://cfh.retehost.com/software/finance-workspace) |
+| **[Your finances](products/finance-workspace/)** | A local planner for paydays, bills, transaction imports, and spending comparisons. No account or AI subscription required. | **[Windows installer](https://github.com/clearframeworks/coders-for-humanity/releases/download/finance-v1.0.0/Your-Finances-Setup-1.0.0-x64.exe)** · [Full source ZIP](https://github.com/clearframeworks/coders-for-humanity/raw/refs/heads/main/apps/community-platform/public/downloads/finance-workspace.zip) · [Product page](https://cfh.retehost.com/software/finance-workspace) |
 | **[CFH community platform](docs/community-platform.md)** | A shared workspace for public-interest projects, contributions, and handoffs. | [Visit CFH](https://cfh.retehost.com) · [Full repository ZIP](https://github.com/clearframeworks/coders-for-humanity/archive/refs/heads/main.zip) · [Source and setup](docs/community-platform.md) |
 
-**Start Your finances on Windows:** extract the ZIP, open its `finance-workspace` folder, and double-click **Start-Finances.cmd**. It sets up its runtime if needed and opens the app. First setup may need internet access. No administrator install is needed. macOS and Linux use Node.js 24 or newer with `npm start`.
+**Windows:** download and run the installer, then open **Your finances** from your desktop or Start menu. It includes its runtime and needs no administrator install. The x64 installer is unsigned, so Windows may show a publisher warning. macOS and Linux can use the source ZIP with Node.js 24 or newer and `npm start`.
 
 The finance app starts empty and stores your records on your computer. AI assistance is optional. The community platform has its own hosting and account setup; see its guide when running your own copy.
 
 **[Browse the product folders](products/)** · **[Browse software on the web](https://cfh.retehost.com/software)**
 
+[![Your finances displaying a fictional cash-flow plan](assets/your-finances-preview.png)](https://cfh.retehost.com/software/finance-workspace)
+
+*Your finances, shown with the app's fictional example plan.*
+
 ## Inside this repository
 
-Each downloadable app has its own folder under [`products/`](products/), with source, a license, and its start or setup files. The web catalog and dedicated product pages live under [`app/software/`](app/software/); ready-to-download packages live under [`public/downloads/`](public/downloads/).
+Each downloadable app has its own folder under [`products/`](products/), with source, a license, and its start or setup files. The web catalog and dedicated product pages live under [`apps/community-platform/app/software/`](apps/community-platform/app/software/). Source ZIPs live under [`public/downloads/`](apps/community-platform/public/downloads/); Windows installers are published in [Releases](https://github.com/clearframeworks/coders-for-humanity/releases).
 
-The CFH community platform also lives here. Its application source is in [`app/`](app/), [`components/`](components/), and [`lib/`](lib/). Its [development and operating guide](docs/community-platform.md) includes setup, verification, architecture, and provider requirements.
+| Folder | What belongs here |
+| --- | --- |
+| [`products/`](products/) | Downloadable apps, each in its own folder |
+| [`apps/community-platform/`](apps/community-platform/) | The CFH website and community application |
+| [`assets/`](assets/) | Hub artwork and real product screenshots |
+| [`docs/`](docs/) | Development, governance, and release guides |
+| [`tools/`](tools/) | Packaging and verification tools |
+
+The CFH platform's [development guide](docs/community-platform.md) covers its own setup and verification. You do not need that setup to use a downloaded product.
 
 ## Improve or add software
 
 Open an [issue](https://github.com/clearframeworks/coders-for-humanity/issues) for a bug, idea, or question. To contribute changes, follow [CONTRIBUTING.md](CONTRIBUTING.md). New products should follow the [product folder guide](products/README.md#adding-a-product): complete source, a dedicated landing page, a usable download, and the simplest honest setup path.
 
-Maintainers: run the [repository checks](docs/community-platform.md#verification). After finance source changes, regenerate its download with `python scripts/build-product-downloads.py`; CI verifies that the package matches the source.
+Maintainers: run the [repository checks](docs/community-platform.md#verification). After finance source changes, regenerate its download with `python tools/build-product-downloads.py`; CI verifies that the package matches the source.
 
 ## License
 

@@ -7,11 +7,11 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "products" / "finance-workspace"
-OUTPUT = ROOT / "public" / "downloads"
-ALLOWED_DIRS = {"dist", "server", "scripts", "tests", "browser-connector"}
+OUTPUT = ROOT / "apps" / "community-platform" / "public" / "downloads"
+ALLOWED_DIRS = {"dist", "server", "scripts", "tests", "browser-connector", "installer"}
 ALLOWED_ROOT = {"package.json", "README.md", "LICENSE", ".gitignore",
-                "Start-Finances.cmd", "Start-Finances.ps1", "Stop-Finances.cmd", "Stop-Finances.ps1"}
-FORBIDDEN = {"runtime", "node_modules", ".openai", ".env", ".env.local", "__pycache__"}
+                "Start-Finances.cmd", "Start-Finances.ps1", "Stop-Finances.cmd", "Stop-Finances.ps1", "Finance-Paths.ps1", "Start-Installed-Finances.ps1"}
+FORBIDDEN = {"runtime", "vendor", "installed.json", "node_modules", ".openai", ".env", ".env.local", "__pycache__"}
 
 
 def build():
@@ -32,7 +32,7 @@ def build():
                 raise ValueError(f"Not distributable: {relative}")
             data = path.read_bytes()
             # Normalize text so Windows and Linux builds produce identical archives.
-            if path.suffix.lower() in {".mjs", ".js", ".json", ".html", ".css", ".md", ".ps1", ".cmd"} or path.name in {"LICENSE", ".gitignore"}:
+            if path.suffix.lower() in {".mjs", ".js", ".json", ".html", ".css", ".md", ".ps1", ".cmd", ".iss"} or path.name in {"LICENSE", ".gitignore"}:
                 data = data.replace(b"\r\n", b"\n")
             info = zipfile.ZipInfo("finance-workspace/" + relative.as_posix(), (2026, 10, 25, 0, 0, 0))
             info.compress_type = zipfile.ZIP_STORED
@@ -51,7 +51,7 @@ if __name__ == "__main__":
     if "--check" in sys.argv:
         for name, expected in artifacts.items():
             if not (OUTPUT / name).exists() or (OUTPUT / name).read_bytes() != expected:
-                raise SystemExit(f"Download is stale: run python scripts/build-product-downloads.py ({name})")
+                raise SystemExit(f"Download is stale: run python tools/build-product-downloads.py ({name})")
         print("Product download matches reviewed source and checksum.")
     else:
         OUTPUT.mkdir(parents=True, exist_ok=True)

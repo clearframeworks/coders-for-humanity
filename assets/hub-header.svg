@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-labelledby="title desc">
+  <title id="title">Coders for Humanity free software</title>
+  <desc id="desc">Download useful apps, keep the full source, and make them your own. A software catalog from Clear Frameworks and Coders for Humanity.</desc>
+  <rect width="1280" height="360" rx="18" fill="#102f3b"/>
+  <path d="M0 338H1280" stroke="#28b89a" stroke-width="44"/>
+  <text x="62" y="65" fill="#a5dcd0" font-family="Arial,Helvetica,sans-serif" font-size="18" letter-spacing="3">CODERS FOR HUMANITY</text>
+  <text x="58" y="144" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="700">Useful software.</text>
+  <text x="58" y="218" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="700">Yours to run.</text>
+  <text x="62" y="274" fill="#c4d7dd" font-family="Arial,Helvetica,sans-serif" font-size="23">Free downloads. Complete source. Optional AI.</text>
+  <rect x="875" y="61" width="340" height="229" rx="12" fill="#f3f8f7"/>
+  <path d="M875 105H1215" stroke="#d3e4e0"/>
+  <text x="900" y="89" fill="#25524b" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700">IN THE SOFTWARE HUB</text>
+  <text x="900" y="148" fill="#143b3a" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="700">Your finances</text>
+  <text x="900" y="178" fill="#4d6865" font-family="Arial,Helvetica,sans-serif" font-size="17">Paydays, bills and spending</text>
+  <path d="M900 199H1188" stroke="#d3e4e0"/>
+  <text x="900" y="232" fill="#143b3a" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="700">CFH community</text>
+  <text x="900" y="262" fill="#4d6865" font-family="Arial,Helvetica,sans-serif" font-size="17">Build useful things together</text>
+</svg>

@@ -1,3 +1,4 @@
+import {resolveRuntimeDir} from '../server/runtime-path.mjs';
 import readline from 'node:readline';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -5,8 +6,7 @@ import {existsSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import {PlaidVault, plaidConfiguration} from '../server/plaid-vault.mjs';
 
-const root = fileURLToPath(new URL('../', import.meta.url));
-const runtimeDir = process.env.FINANCE_RUNTIME_DIR || path.join(root, 'runtime');
+const runtimeDir = resolveRuntimeDir();
 
 async function hiddenQuestion(label) {
   const terminal = readline.createInterface({input: process.stdin, output: process.stdout, terminal: true});
