@@ -1,17 +1,17 @@
 {
   "product": "Your finances",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "architecture": "x64",
-  "installer": "Your-Finances-Setup-1.0.0-x64.exe",
-  "installerSha256": "8c029962aa11ff9eb3e8ebaa91aff44b7af0252b6ae598754345e40d90e8be77",
+  "installer": "Your-Finances-Setup-1.1.0-x64.exe",
+  "installerSha256": "e7a001b9f45444af15229a4a556100fd00f120a3a816e1b879350cb91e9236be",
   "sourceArchive": "finance-workspace.zip",
-  "sourceArchiveSha256": "e28dfc33d18554baf571980687c93cbb87baac902d5874a0dcdcfbe3dde5e6f2",
+  "sourceArchiveSha256": "1b8984ced7871c0998b8415690cbc4b67dd1ef5ddeb3866c8f7a3a3de4c29114",
   "nodeVersion": "v24.14.0",
   "nodeArchiveSha256": "313fa40c0d7b18575821de8cb17483031fe07d95de5994f6f435f3b345f85c66",
   "nodeExecutableSha256": "63c259c81e5d472b5f11c8d506070130cb04a1ecf84b80377a34ed6ec9048088",
   "compilerVersion": "0.0.0.0",
   "compilerExecutableSha256": "0a8757031b33777e4c9cbffee40f11a5062b36d25cbe144c1db73b6102b80ad7",
-  "repositoryHead": "e4b274688011e3e47615215459a304071274d3d7",
+  "repositoryHead": "c02c4527cbbcc022109b2504da5e2ff98e5d687e",
   "workingTreeHasChanges": false,
-  "builtAtUtc": "2026-10-25T15:35:07.1572455Z"
+  "builtAtUtc": "2026-10-30T00:08:07.3381583Z"
 }

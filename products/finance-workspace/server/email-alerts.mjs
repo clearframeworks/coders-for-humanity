@@ -1,7 +1,9 @@
-import {categoryForHistory} from '../dist/spending-plan.mjs';
 import {createHash} from 'node:crypto';
 import {InputError} from './validation.mjs';
 import {suggestCategory} from '../dist/engine.mjs';
+import {normalizeMerchant} from '../dist/planning.mjs';
+import {parseFifthThirdEmail} from './fifth-third-alerts.mjs';
+import {parseCashAppSentEmail} from './cashapp-sent-alerts.mjs';
 
 const fail = message => {throw new InputError(message);};
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -74,14 +76,57 @@ function schema(db) {
   `);
 }
 function hasSchema(db) {return !!db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='email_alerts'").get();}
+function p2pIdentity(row,alert){
+  return [alert.recipient,alert.note].filter(value=>typeof value==='string'&&value.trim()).map(normalizedMerchant).includes(normalizedMerchant(String(row.description||'')));
+}
+function linkedP2PFee(transactions,principal,alert){
+  if(!(principal.amount<0)||principal.date!==alert.date)return null;
+  const fees=transactions.filter(row=>row.source==='cashapp'&&row.cashAppType==='P2P'&&row.key===principal.key+':fee');
+  if(fees.length!==1)return null;
+  const fee=fees[0];
+  const originalFee=fee.sourceCategory==='Fees';
+  const sameProviderId=!(principal.cashAppTransactionId||fee.cashAppTransactionId)||(typeof principal.cashAppTransactionId==='string'&&!!principal.cashAppTransactionId&&principal.cashAppTransactionId===fee.cashAppTransactionId);
+  return originalFee&&sameProviderId&&fee.date===principal.date&&Number.isFinite(fee.amount)&&fee.amount<0&&Math.round(principal.amount*100)+Math.round(fee.amount*100)===Math.round(alert.amount*100)?fee:null;
+}
+function candidateClaimIds(transactions,candidate,alert){
+  const fee=alert.cashAppType==='P2P'&&Math.round(candidate.amount*100)!==Math.round(alert.amount*100)?linkedP2PFee(transactions,candidate,alert):null;
+  return [candidate.id,...(fee?[fee.id]:[])];
+}
+function cashAppMatchMethod(transactions,candidate,alert){
+  if(alert.cashAppType!=='P2P')return 'unique_date_amount_merchant';
+  return Math.round(candidate.amount*100)!==Math.round(alert.amount*100)&&linkedP2PFee(transactions,candidate,alert)?'unique_date_total_with_explicit_fee_heuristic':'unique_date_amount_recipient_or_note';
+}
+function possibleCashAppDuplicates(transactions,alert){
+  return transactions.filter(row=>row.source==='cashapp'&&row.cashAppType===(alert.cashAppType==='P2P'?'P2P':'CashCard')&&(alert.cashAppType!=='P2P'||!row.key?.endsWith(':fee'))&&row.date===alert.date&&(Math.round(row.amount*100)===Math.round(alert.amount*100)||(alert.cashAppType==='P2P'&&p2pIdentity(row,alert))));
+}
 function semanticCandidates(transactions, alert) {
+  if(alert.provider==='fifththird'){
+    const merchant=value=>normalizeMerchant(String(value).replace(/^(?:debit\s+card\s+purchase|card\s+purchase|purchase)\s+(?:at\s+)?/i,''));
+    return transactions.filter(row=>row.source==='fifththird'&&row.date===alert.date&&Math.round(row.amount*100)===Math.round(alert.amount*100)&&merchant(row.description)===merchant(alert.merchant));
+  }
+  if(alert.cashAppType==='P2P'){
+    return transactions.filter(row=>row.source==='cashapp'&&row.cashAppType==='P2P'&&!row.key?.endsWith(':fee')&&row.date===alert.date&&p2pIdentity(row,alert)&&(Math.round(row.amount*100)===Math.round(alert.amount*100)||linkedP2PFee(transactions,row,alert)));
+  }
   return transactions.filter(row => row.source === 'cashapp' && row.cashAppType === 'CashCard' && row.date === alert.date && Math.round(row.amount * 100) === Math.round(alert.amount * 100) && normalizedMerchant(row.description) === normalizedMerchant(alert.merchant));
+}
+function p2pCompetes(alert,candidate,alerts,transactions){
+  return alert.cashAppType==='P2P'&&alerts.some(other=>other.receiptId!==alert.receiptId&&other.cashAppType==='P2P'&&other.status==='completed'&&semanticCandidates(transactions,other).some(row=>row.id===candidate.id));
+}
+function parseEmail(raw){
+  const senders=headers(raw,'From');
+  if(senders.length===1&&typeof senders[0]==='string'&&/^(?:FifthThirdBank@53\.com|[^<>\r\n]*<FifthThirdBank@53\.com>)$/i.test(senders[0].trim()))return parseFifthThirdEmail(raw);
+  return headers(raw,'Subject').length===1&&headers(raw,'Subject')[0]==='Payment sent'?parseCashAppSentEmail(raw):parseCashAppEmail(raw);
+}
+function fifthThirdDigest(raw){
+  // Gmail history, labels and thread metadata can change after delivery. Only
+  // the native identity, received timestamp and MIME evidence define this copy.
+  return 'fifththird-native-v1:'+hash(JSON.stringify({id:raw.id,internal_date:raw.internal_date,payload:raw.payload}));
 }
 
 /** Import a pre-fetched Gmail batch atomically; this module has no mail/network client. */
 export function importEmailMessages(store, messages, {now = new Date().toISOString()} = {}) {
-  if (!Array.isArray(messages) || !messages.length || messages.length > 1000) fail('Import 1 to 1,000 Cash App emails at a time.');
-  const alerts = messages.map(parseCashAppEmail);
+  if (!Array.isArray(messages) || !messages.length || messages.length > 1000) fail('Import 1 to 1,000 supported purchase emails at a time.');
+  const alerts = messages.map(parseEmail);
   const timestamp = typeof now === 'function' ? now() : now;
   if (typeof timestamp !== 'string' || !Number.isFinite(Date.parse(timestamp))) fail('Email import time is invalid.');
   const result = {processed:messages.length, added:0, updated:0, pending:0, duplicates:0, matched:0, review:0};
@@ -92,29 +137,49 @@ export function importEmailMessages(store, messages, {now = new Date().toISOStri
     const state = store.getState();
     if (state.mode !== 'personal') fail('Switch to your own plan before importing real email alerts.');
     const original = JSON.stringify(state.transactions);
-    for (const alert of alerts) {
-      const digest = hash(JSON.stringify(alert));
+    const competingAlerts=[...db.prepare('SELECT data FROM email_alerts').all().map(row=>JSON.parse(row.data)),...alerts];
+    for (const [index,alert] of alerts.entries()) {
+      const digest = alert.provider==='fifththird'?fifthThirdDigest(messages[index]):hash(JSON.stringify(alert));
       const knownMessage = db.prepare('SELECT receipt_id, digest FROM email_alert_messages WHERE message_id = ?').get(alert.messageId);
       if (knownMessage) {
-        if (knownMessage.receipt_id !== alert.receiptId || knownMessage.digest !== digest) fail('A previously imported Gmail message changed. Review the source before retrying.');
+        if (knownMessage.receipt_id !== alert.receiptId) fail('A previously imported Gmail message changed. Review the source before retrying.');
+        if(knownMessage.digest!==digest){
+          const exactLegacy=alert.provider==='fifththird'&&/^[a-f0-9]{64}$/.test(knownMessage.digest)&&knownMessage.digest===hash(JSON.stringify(messages[index]));
+          if(!exactLegacy)fail('A previously imported Gmail message changed. Review the source before retrying.');
+          // Upgrade only when the caller supplies the exact old native JSON.
+          // A refreshed envelope cannot establish what the legacy hash covered.
+          db.prepare('UPDATE email_alert_messages SET digest=? WHERE message_id=? AND digest=?').run(digest,alert.messageId,knownMessage.digest);
+        }
         result.duplicates++; continue;
       }
       const record = db.prepare('SELECT data, matched_transaction_id FROM email_alerts WHERE receipt_id = ?').get(alert.receiptId);
       const previous = record ? JSON.parse(record.data) : null;
+      if(alert.cashAppType==='P2P'&&previous&&['provider','paymentKind','cashAppType','amount','recipient','note'].some(field=>previous[field]!==alert[field]))fail('A Cash App sent receipt changed its payment identity. Review the source before retrying.');
+      if(alert.provider==='fifththird'){
+        if(previous&&['provider','date','amount','merchant','status'].some(field=>previous[field]!==alert[field]))fail('A Fifth Third provider message changed. Review the source before retrying.');
+        const candidates=semanticCandidates(state.transactions,alert);
+        const claimed=new Set(db.prepare('SELECT matched_transaction_id FROM email_alerts WHERE receipt_id != ? AND matched_transaction_id IS NOT NULL').all(alert.receiptId).map(row=>row.matched_transaction_id));
+        const unique=candidates.length===1&&!claimed.has(candidates[0].id);
+        const saved={...alert,needsReview:true,matchMethod:unique?'unique_date_amount_merchant_heuristic':candidates.length?'ambiguous_history':'reported_only'};
+        db.prepare('INSERT INTO email_alerts(receipt_id,data,matched_transaction_id,updated_at) VALUES (?,?,?,?) ON CONFLICT(receipt_id) DO UPDATE SET data=excluded.data,matched_transaction_id=excluded.matched_transaction_id,updated_at=excluded.updated_at').run(alert.receiptId,JSON.stringify(saved),unique?candidates[0].id:null,timestamp);
+        db.prepare('INSERT INTO email_alert_messages(message_id,receipt_id,digest) VALUES (?,?,?)').run(alert.messageId,alert.receiptId,digest);
+        if(unique)result.matched++;result.review++;continue;
+      }
       let saved = {...alert, needsReview:false, matchMethod:null}, matchedId = record?.matched_transaction_id || null;
       // A later delivery of an older pending alert must not reverse completion.
       if (previous?.status === 'completed' && alert.status === 'pending') {
         result.duplicates++;
       } else {
         const key = 'cashapp-email:' + alert.receiptId;
-        const existing = state.transactions.find(row => row.key === key && row.source === 'cashapp-email');
+        const existing = state.transactions.find(row => row.key === key && row.source === 'cashapp-email' && (alert.cashAppType!=='P2P'||row.emailReceiptId===alert.receiptId));
         if (alert.status === 'pending') result.pending++;
         else {
           const candidates = semanticCandidates(state.transactions, alert);
-          const possibleDuplicates = state.transactions.filter(row => row.source === 'cashapp' && row.cashAppType === 'CashCard' && row.date === alert.date && Math.round(row.amount * 100) === Math.round(alert.amount * 100));
+          const possibleDuplicates = possibleCashAppDuplicates(state.transactions,alert);
           const claimed = new Set(db.prepare('SELECT matched_transaction_id FROM email_alerts WHERE receipt_id != ? AND matched_transaction_id IS NOT NULL').all(alert.receiptId).map(row => row.matched_transaction_id));
-          if (candidates.length === 1 && !claimed.has(candidates[0].id)) {
-            matchedId = candidates[0].id; saved.matchMethod = 'unique_date_amount_merchant'; result.matched++;
+          if (candidates.length === 1 && candidateClaimIds(state.transactions,candidates[0],alert).every(id=>!claimed.has(id)) && !p2pCompetes(alert,candidates[0],competingAlerts,state.transactions)) {
+            matchedId = candidates[0].id; saved.matchMethod = cashAppMatchMethod(state.transactions,candidates[0],alert); result.matched++;
+            if(alert.cashAppType==='P2P'){saved.needsReview=true;result.review++;}
             // Preserve CSV as authority; a previously unmatched email copy can
             // be reconciled when this same receipt is delivered again later.
             if (existing) {state.transactions = state.transactions.filter(row => row !== existing);result.updated++;}
@@ -122,11 +187,12 @@ export function importEmailMessages(store, messages, {now = new Date().toISOStri
             saved.needsReview = true; saved.matchMethod = 'ambiguous_history'; matchedId = null; result.review++;
           } else {
             const transaction = {id:key,key,date:alert.date,description:alert.merchant,amount:alert.amount,category:existing?.category || alert.category,source:'cashapp-email',emailReceiptId:alert.receiptId,needsReview:true,dateBasis:'email_received'};
+            if(alert.cashAppType==='P2P')Object.assign(transaction,{cashAppType:'P2P',paymentKind:'p2p',recipient:alert.recipient,note:alert.note,receivedAt:alert.receivedAt,receivedTime:alert.receivedTime});
             saved.needsReview = true; saved.matchMethod = 'email_only'; matchedId = key; result.review++;
             if (existing) {
               if (JSON.stringify(existing) !== JSON.stringify(transaction)) {Object.assign(existing,transaction);result.updated++;}
               else result.duplicates++;
-            } else {if(state.plan.forecastBasis?.ownerPurposeRules)transaction.category=categoryForHistory(transaction);state.transactions.push(transaction);result.added++;}
+            } else {state.transactions.push(transaction);result.added++;}
           }
         }
         db.prepare('INSERT INTO email_alerts(receipt_id,data,matched_transaction_id,updated_at) VALUES (?,?,?,?) ON CONFLICT(receipt_id) DO UPDATE SET data=excluded.data,matched_transaction_id=excluded.matched_transaction_id,updated_at=excluded.updated_at').run(alert.receiptId,JSON.stringify(saved),matchedId,timestamp);
@@ -140,10 +206,13 @@ export function importEmailMessages(store, messages, {now = new Date().toISOStri
 }
 
 export function readEmailStatus(store) {
-  const saved = store.db.prepare('SELECT value FROM metadata WHERE key=?').get('email_import_status');
-  const data = hasSchema(store.db) ? store.db.prepare('SELECT data FROM email_alerts').all().map(row => JSON.parse(row.data)) : [];
-  return {configured:false,transport:'prefetched-gmail-json',lastImport:saved ? JSON.parse(saved.value).lastImport : null,total:data.length,pending:data.filter(row => row.status==='pending').length,completed:data.filter(row => row.status==='completed').length,review:data.filter(row=>row.needsReview).length,lastResult:saved ? JSON.parse(saved.value) : null};
+  const saved=store.db.prepare('SELECT value FROM metadata WHERE key=?').get('email_import_status');
+  const data=hasSchema(store.db)?store.db.prepare('SELECT data FROM email_alerts').all().map(row=>JSON.parse(row.data)):[];
+  const collection=emailMetadata(store,'email_collection_status');
+  const plan=store.getState().plan;
+  return {configured:!!collection,transport:'prefetched-gmail-json',collection,lastMailboxCheck:collection?.lastMailboxCheck||null,lastImport:saved?JSON.parse(saved.value).lastImport:null,total:data.length,pending:data.filter(row=>row.status==='pending').length,completed:data.filter(row=>row.status==='completed').length,reported:data.filter(row=>row.status==='reported').length,review:data.filter(row=>row.needsReview).length,lastResult:saved?JSON.parse(saved.value):null,request:readEmailCheckRequest(store),planBalance:{snapshotDate:plan.startDate,accountDates:[...new Set((plan.accounts||[]).map(account=>account.balanceAsOf||plan.startDate))],verifiedByReceipts:false}};
 }
+
 export function readEmailAlerts(store, {offset=0,limit=50} = {}) {
   if (!Number.isInteger(offset)||offset<0||!Number.isInteger(limit)||limit<1||limit>200) fail('Choose a valid email alert page.');
   if (!hasSchema(store.db)) return [];
@@ -155,20 +224,33 @@ export function readEmailAlerts(store, {offset=0,limit=50} = {}) {
 export function reconcileEmailHistory(store, incomingTransactions) {
   if (!Array.isArray(incomingTransactions) || incomingTransactions.length > 20000) fail('Email reconciliation needs a bounded transaction list.');
   let transactions = incomingTransactions.map(row => ({...row}));
-  let reconciled = 0, review = 0;
-  if (!hasSchema(store.db)) return {transactions,reconciled,review};
+  let reconciled = 0, metadataMatches = 0, review = 0;
+  if (!hasSchema(store.db)) return {transactions,reconciled,metadataMatches,review};
   const records = store.db.prepare('SELECT receipt_id,data,matched_transaction_id FROM email_alerts ORDER BY receipt_id').all();
   if (records.length > 20000) fail('Email alert history exceeds the reconciliation limit.');
   const claims = new Map();
+  const competingAlerts=records.map(record=>JSON.parse(record.data));
   for (const record of records) if (record.matched_transaction_id) {
     if (!claims.has(record.matched_transaction_id)) claims.set(record.matched_transaction_id,new Set());
     claims.get(record.matched_transaction_id).add(record.receipt_id);
   }
   for (const record of records) {
     const alert = JSON.parse(record.data);
+    if(alert.provider==='fifththird'&&alert.status==='reported'){
+      const candidates=semanticCandidates(transactions,alert);
+      const unique=candidates.length===1&&[...(claims.get(candidates[0].id)||[])].every(id=>id===record.receipt_id);
+      const matchedId=unique?candidates[0].id:null;
+      const saved={...alert,needsReview:true,matchMethod:unique?'unique_date_amount_merchant_heuristic':candidates.length?'ambiguous_history':'reported_only'};
+      if(record.matched_transaction_id&&claims.has(record.matched_transaction_id))claims.get(record.matched_transaction_id).delete(record.receipt_id);
+      if(matchedId){if(!claims.has(matchedId))claims.set(matchedId,new Set());claims.get(matchedId).add(record.receipt_id);}
+      if(matchedId!==record.matched_transaction_id&&matchedId)metadataMatches++;
+      review++;
+      if(JSON.stringify(saved)!==record.data||matchedId!==record.matched_transaction_id)store.db.prepare('UPDATE email_alerts SET data=?,matched_transaction_id=? WHERE receipt_id=?').run(JSON.stringify(saved),matchedId,record.receipt_id);
+      continue;
+    }
     if (alert.status !== 'completed') continue;
     const candidates = semanticCandidates(transactions,alert);
-    const available = candidates.length === 1 && [...(claims.get(candidates[0].id)||[])].every(id=>id===record.receipt_id);
+    const available = candidates.length === 1 && candidateClaimIds(transactions,candidates[0],alert).every(id=>[...(claims.get(id)||[])].every(owner=>owner===record.receipt_id)) && !p2pCompetes(alert,candidates[0],competingAlerts,transactions);
     let saved = alert, matchedId = record.matched_transaction_id;
     if (available) {
       const key = 'cashapp-email:' + record.receipt_id;
@@ -179,11 +261,63 @@ export function reconcileEmailHistory(store, incomingTransactions) {
       matchedId = candidates[0].id;
       if (!claims.has(matchedId)) claims.set(matchedId,new Set());
       claims.get(matchedId).add(record.receipt_id);
-      saved = {...alert,needsReview:false,matchMethod:'unique_date_amount_merchant'};
-    } else if (candidates.length) {
+      saved = {...alert,needsReview:alert.cashAppType==='P2P',matchMethod:cashAppMatchMethod(transactions,candidates[0],alert)};
+      if(alert.cashAppType==='P2P')review++;
+    } else if (candidates.length||(alert.cashAppType==='P2P'&&possibleCashAppDuplicates(transactions,alert).length)) {
       saved = {...alert,needsReview:true,matchMethod:'ambiguous_history'};review++;
     }
     if (JSON.stringify(saved)!==record.data || matchedId!==record.matched_transaction_id) store.db.prepare('UPDATE email_alerts SET data=?,matched_transaction_id=? WHERE receipt_id=?').run(JSON.stringify(saved),matchedId,record.receipt_id);
   }
-  return {transactions,reconciled,review};
+  return {transactions,reconciled,metadataMatches,review};
 }
+
+function emailMetadata(store,key){
+  const record=store.db.prepare('SELECT value FROM metadata WHERE key=?').get(key);
+  if(!record)return null;
+  try{return JSON.parse(record.value)}catch{return null}
+}
+function checkedEmailTime(value){
+  if(typeof value!=='string'||!/^\d{4}-\d\d-\d\dT/.test(value)||!Number.isFinite(Date.parse(value)))fail('Email check needs a valid ISO timestamp.');
+  const normalized=new Date(value).toISOString();
+  if(normalized<'2000'||normalized>'2200')fail('Email check timestamp is outside the supported range.');
+  return normalized;
+}
+/** Collection metadata only. Native messages still go through the strict importer. */
+export function recordEmailCheck(store,input){
+  if(!input||typeof input!=='object'||Array.isArray(input))fail('Email check status must be an object.');
+  const allowed=new Set(['state','checkedAt','error','processed','added','updated','held']);
+  if(Object.keys(input).some(key=>!allowed.has(key)))fail('Email check metadata may contain only status, time, error and counts.');
+  if(!['running','success','error'].includes(input.state))fail('Email check state must be running, success or error.');
+  const checkedAt=checkedEmailTime(input.checkedAt),counts={};
+  for(const key of ['processed','added','updated','held']){
+    const value=input[key]??0;
+    if(!Number.isSafeInteger(value)||value<0||value>1000000)fail('Email check counts must be nonnegative whole numbers up to 1,000,000.');
+    counts[key]=value;
+  }
+  if(input.error!==undefined&&(input.state!=='error'||typeof input.error!=='string'||!input.error.trim()||input.error.length>400||/[\r\n<>]/.test(input.error)))fail('Use a short plain-text error only for a failed email check.');
+  const db=store.db;db.exec('BEGIN IMMEDIATE');
+  try{
+    const previous=emailMetadata(store,'email_collection_status');
+    if(previous?.lastAttempt&&checkedAt<previous.lastAttempt)throw new InputError('A newer email check is already recorded.',409);
+    const collection={state:input.state,lastAttempt:checkedAt,lastMailboxCheck:input.state==='running'?previous?.lastMailboxCheck||null:checkedAt,lastSuccess:input.state==='success'?checkedAt:previous?.lastSuccess||null,lastError:input.state==='error'?(input.error?.trim()||'The mailbox check could not finish.'):null,lastResult:input.state==='running'?previous?.lastResult||null:counts};
+    db.prepare('INSERT INTO metadata(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('email_collection_status',JSON.stringify(collection));
+    const request=emailMetadata(store,'email_check_request');
+    if(request&&checkedAt>=request.requestedAt&&['pending','running'].includes(request.state)){
+      request.state=input.state==='success'?'completed':input.state==='error'?'error':'running';request.updatedAt=checkedAt;
+      db.prepare('UPDATE metadata SET value=? WHERE key=?').run(JSON.stringify(request),'email_check_request');
+    }
+    db.exec('COMMIT');return collection;
+  }catch(error){db.exec('ROLLBACK');throw error}
+}
+export function requestEmailCheck(store,{now=new Date().toISOString()}={}){
+  if(!emailMetadata(store,'email_collection_status'))throw new InputError('Connect a separate email checker before requesting a mailbox check. This app does not contain a Gmail reader.',503);
+  const requestedAt=checkedEmailTime(now),db=store.db;db.exec('BEGIN IMMEDIATE');
+  try{
+    const current=emailMetadata(store,'email_check_request');
+    if(current&&['pending','running'].includes(current.state)){db.exec('COMMIT');return current;}
+    const request={state:'pending',requestedAt,updatedAt:requestedAt};
+    db.prepare('INSERT INTO metadata(key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').run('email_check_request',JSON.stringify(request));
+    db.exec('COMMIT');return request;
+  }catch(error){db.exec('ROLLBACK');throw error}
+}
+export function readEmailCheckRequest(store){return emailMetadata(store,'email_check_request');}

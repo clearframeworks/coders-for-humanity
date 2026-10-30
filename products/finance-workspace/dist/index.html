@@ -3,31 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f6f7f3">
+  <meta name="theme-color" content="#f6f5f1">
   <meta name="description" content="See upcoming pay, bills and everyday spending together. Explore your cash flow before you commit your money.">
   <title>Your finances</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./redesign.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <aside class="sidebar">
     <a class="wordmark" href="#home"><span class="brand-mark" aria-hidden="true">≋</span>Your finances<span class="small-tag">WORKSPACE</span></a>
-    <p class="nav-label">YOUR MONEY</p>
-    <nav aria-label="Main navigation"><a href="#home" data-page="home">Home</a><a href="#forecast/calendar" data-page="forecast" data-tab="calendar">Upcoming</a>
-      <a href="#forecast/overview" data-page="forecast" data-tab="analysis"><span aria-hidden="true">↗</span> Projections</a>
-      <a href="#transactions" data-page="transactions"><span aria-hidden="true">⇄</span> Transactions</a>
-      <a href="#spending" data-page="spending"><span aria-hidden="true">◒</span> Spending</a>
-      <a href="#automation" data-page="automation"><span aria-hidden="true">↻</span> Settings & tools</a>
+    <nav aria-label="Main navigation">
+      <p class="nav-group-label">DAY TO DAY</p>
+      <a href="#home" data-page="home">Home</a>
+      <a href="#forecast/calendar" data-page="forecast" data-tab="calendar">Upcoming</a>
+      <a href="#bills" data-page="bills">Bills &amp; income</a>
+      <p class="nav-group-label">UNDERSTAND &amp; PLAN</p>
+      <a href="#forecast/overview" data-page="forecast" data-tab="analysis">Projections</a>
+      <a href="#spending" data-page="spending">Spending</a>
+      <a href="#transactions" data-page="transactions">Transactions</a>
+      <p class="nav-group-label">MANAGE</p>
+      <a href="#accounts" data-page="accounts">Accounts</a>
+      <a href="#automation" data-page="automation">Settings &amp; tools</a>
     </nav>
     <div class="sidebar-bottom"><div class="status-dot"></div><strong id="storage-label">Checking storage</strong><p id="storage-detail">Your plan stays under your control.</p><button class="text-button" id="backup">Export backup ↗</button><button class="text-button" id="restore">Restore backup</button></div>
   </aside>
   <div class="workspace">
-    <header class="topbar"><span id="today-label"></span><div><span class="local-badge" id="connection-label">No bank connected</span><details id="auto-update-menu" class="auto-update-menu"><summary class="button small" id="auto-update-button">Refresh <span id="auto-update-mode">On</span><small id="auto-update-time">Not checked yet</small></summary><div class="auto-update-panel"><h2>Keep your numbers up to date</h2><label class="auto-update-option"><input type="checkbox" id="auto-update-enabled" checked> Refresh this screen every minute</label><button class="button primary" id="update-now" type="button" disabled>Check now</button><p id="auto-update-status" role="status" aria-live="polite">Connecting to the local service…</p><p class="quiet-note" id="auto-update-scope">Checks available statement imports and refreshes spending and forecasts. Purchase emails are collected by the separate 10 a.m. morning check.</p><p class="quiet-note">Turning this off pauses screen refreshes. Background imports continue while the local service runs.</p></div></details><button class="button small" id="edit-top"><span class="desktop-label">Review your plan</span><span class="mobile-label">Plan</span></button></div></header>
+    <header class="topbar"><span id="today-label"></span><div><a class="local-badge" id="connection-label" href="#accounts">Loading collection status</a><details id="auto-update-menu" class="auto-update-menu"><summary class="button small" id="auto-update-button">Refresh <span id="auto-update-mode">On</span><small id="auto-update-time">Not checked yet</small></summary><div class="auto-update-panel"><h2>Keep your numbers up to date</h2><label class="auto-update-option"><input type="checkbox" id="auto-update-enabled" checked> Refresh this screen every minute</label><button class="button primary" id="update-now" type="button" disabled>Check now</button><p id="auto-update-status" role="status" aria-live="polite">Connecting to the local service…</p><p class="quiet-note" id="auto-update-scope">Refreshes local files and the saved screen. Mailbox check status is shown separately; email collection runs through your configured email checker.</p><p class="quiet-note">Turning this off pauses screen refreshes. Background imports continue while the local service runs.</p></div></details><button class="button small" id="edit-top"><span class="desktop-label">Review your plan</span><span class="mobile-label">Plan</span></button></div></header>
     <main id="main" tabindex="-1">
+      <p id="app-loading" class="app-loading" role="status">Loading your saved plan…</p>
       <div id="notice" class="notice" role="status" hidden></div>
       <div id="mode-banner" class="mode-banner" hidden></div>
       <section id="page-home" class="page" hidden></section>
-      <section id="page-forecast" class="page">
+      <section id="page-forecast" class="page" hidden>
         <div class="page-heading"><div><p class="eyebrow">A LITTLE CLARITY, AHEAD</p><h1 id="forecast-page-title">Projections</h1><p id="forecast-view-description">Expected money in and out through <span id="end-label"></span>.</p></div><label class="horizon-label">Look ahead<select id="horizon"><option value="14">14 days</option><option value="30">30 days</option><option value="45">45 days</option><option value="60">60 days</option><option value="90">90 days</option><option value="180">180 days</option></select></label></div>
         <div id="empty-plan" class="empty-plan" hidden><h2>See what may be left after bills.</h2><p>Add your available balance, paydays and upcoming bills. Your forecast will take everyday spending into account, too.</p><button class="button primary" id="setup-plan">Set up your plan</button><button class="button" id="view-example">Explore an example</button></div>
         <div id="forecast-content">

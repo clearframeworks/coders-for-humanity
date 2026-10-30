@@ -2,7 +2,7 @@
 
 Free personal cash-flow planning, bills, transaction imports and spending comparisons. Runs on your own computer, with no account or AI subscription required. Full editable source is included under the MIT license.
 
-**Windows installer:** run **Your-Finances-Setup-1.0.0-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
+**Windows installer:** run **Your-Finances-Setup-1.1.0-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
 
 Your installed data is kept in `%LOCALAPPDATA%/CFH/Your finances/runtime`, separately from the app. Updates and uninstall preserve it. To stop the service, use **Stop Your finances** in the Start menu. Closing the browser leaves the local service running. Export backups in the app.
 
@@ -29,3 +29,9 @@ The included browser collector and bank adapter are optional. Live bank sync nee
 Forecasts depend on the balances, dates and spending you enter. Review suggested transaction categories and estimates before relying on them. Imported history does not automatically change your available-money snapshot.
 
 For development, run `npm test`. Source lives in `dist/` (browser code), `server/`, `scripts/` and `browser-connector/`; `dist/` contains the readable application source and needs no build step.
+
+## Email updates and balance dates
+
+The screen refreshes saved data every minute while the app runs. Mailbox collection is a separate, optional connection: Settings shows its last actual check, pending request, and any error. A fresh installation does not include access to your email.
+
+Receipt imports keep completed, pending and unverified activity distinct. A purchase email does not verify your account balance. Saved balance dates remain visible; importing the same email again does not deduct it from your funds again.
