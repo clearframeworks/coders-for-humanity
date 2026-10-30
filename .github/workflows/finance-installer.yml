@@ -56,7 +56,7 @@ jobs:
           ./tools/build-finance-installer.ps1 -CompilerPath $env:FINANCE_COMPILER -WorkDirectory (Join-Path $env:RUNNER_TEMP 'finance-installer-stage') -OutputDirectory (Join-Path $env:RUNNER_TEMP 'finance-installer-artifacts')
       - name: Verify install, active upgrade, uninstall and data recovery
         run: |
-          ./products/finance-workspace/installer/test-install.ps1 -InstallerPath (Join-Path $env:RUNNER_TEMP 'finance-installer-artifacts/Your-Finances-Setup-1.1.0-x64.exe') -TestRoot (Join-Path $env:RUNNER_TEMP 'finance-installer-lifecycle')
+          ./products/finance-workspace/installer/test-install.ps1 -InstallerPath (Join-Path $env:RUNNER_TEMP 'finance-installer-artifacts/Your-Finances-Setup-1.1.1-x64.exe') -TestRoot (Join-Path $env:RUNNER_TEMP 'finance-installer-lifecycle')
       - name: Save installer, checksums and lifecycle evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

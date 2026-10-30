@@ -7,7 +7,7 @@ import {readFile, stat, realpath} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {Store} from './store.mjs';
 import {BrowserDownloads} from './browser-downloads.mjs';
-import {readEmailStatus,readEmailAlerts,reconcileEmailHistory,requestEmailCheck,readEmailCheckRequest} from './email-alerts.mjs';
+import {readEmailStatus,readBalanceReceipts,readEmailAlerts,reconcileEmailHistory,requestEmailCheck,readEmailCheckRequest} from './email-alerts.mjs';
 import {InputError, validateScenario, validateState} from './validation.mjs';
 import {forecast} from '../dist/engine.mjs';
 import {LanAuth} from './lan-auth.mjs';
@@ -87,6 +87,7 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
           return sendJson(res, 404, {error: 'Banking API route or method not found.'});
         }
         auth.requireAuthorized(session);
+        if (pathname === '/api/balance-activity' && req.method === 'GET') return sendJson(res, 200, readBalanceReceipts(store));
         if (pathname === '/api/state' && req.method === 'GET') return sendJson(res, 200, store.getState());
         if (pathname === '/api/state' && req.method === 'PUT') {
           const state = await jsonBody(req);

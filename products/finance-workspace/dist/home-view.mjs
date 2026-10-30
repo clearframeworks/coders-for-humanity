@@ -50,7 +50,7 @@ export function buildHomeModel(state,{asOf=currentLedgerDate()}={}){
   return {...result,week,outlook,upcoming,savings};
 }
 
-export function mountHomeView({getState,navigate,onSetup,onExample}){
+export function mountHomeView({getState,getBalances,navigate,onSetup,onExample}){
   const setup=()=>onSetup?onSetup():document.querySelector('#edit-top')?.click();
   const explore=()=>onExample?onExample():document.querySelector('#view-example')?.click();
   function bind(root){
@@ -82,11 +82,12 @@ export function mountHomeView({getState,navigate,onSetup,onExample}){
       bind(root);return;
     }
     const model=buildHomeModel(state),week=model.week,outlook=model.outlook;
+    const balances=getBalances?.(),charged=balances?.accounts.reduce((sum,a)=>sum+a.charges,0)||0;
     const shortfall=outlook&&outlook.lowestBalance<0;
     const cushionGap=outlook&&!shortfall&&state.plan.cushion>outlook.lowestBalance;
     const date=value=>new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric'}).format(new Date(value+'T12:00:00'));
     root.innerHTML=`<div class="page-heading home-heading"><div><p class="eyebrow">YOUR PLAN AT A GLANCE</p><h1>Your money ahead</h1><p>The next few days, with your plans in view.</p></div></div>
-      <div class="home-snapshot"><div><span>Saved balance</span><strong>${money(model.snapshotBalance)}</strong><span>as of <time datetime="${esc(model.snapshotDate)}">${esc(date(model.snapshotDate))}</time></span></div><a class="text-button" href="#accounts">Review balances</a></div>
+      <div class="home-snapshot running-balance"><div><span>Calculated balance now</span><strong id="home-running-balance">${money(balances?.balance??model.snapshotBalance)}</strong><span>Starting ${money(model.snapshotBalance)} − ${money(charged)} recorded charges${balances?.accounts.some(a=>a.credits)?' + recorded credits':''}</span></div><a class="text-button" href="#accounts">See account balances →</a><p>New charges subtract automatically. Pending and reported charges are included once. Forecasts below remain based on the dated plan inputs.${(balances?.unmapped||balances?.heldSameDay||balances?.heldAmbiguous)?' Some activity needs an account or timing review.':''}</p></div>
       <div class="home-overview">
         <section id="home-outlook" class="home-focus ${shortfall?'has-shortfall':cushionGap?'has-cushion-gap':''}" aria-labelledby="home-outlook-heading">
           ${outlook?`<p class="home-risk-label">${shortfall?'Possible shortfall':cushionGap?'Below your cushion':'Based on your saved plan'}</p><h2 id="home-outlook-heading">Lowest projected balance</h2><p class="home-period">${esc(date(model.windowStart))} – ${esc(date(model.upcomingEnd))}</p><strong class="home-primary-amount">${money(outlook.lowestBalance)}</strong><p class="home-low-date">On ${esc(date(outlook.minDate))}</p>${shortfall?'<p class="home-risk-description">Your planned costs could take the balance below zero before this period ends.</p>':cushionGap?`<p class="home-risk-description">This is below the ${money(state.plan.cushion)} cushion in your plan.</p>`:'<p class="home-risk-description">This is a projection, not a newly checked bank balance.</p>'}<a class="text-button" href="#forecast/calendar">Open calendar →</a>`:`<h2 id="home-outlook-heading">Review your balance date</h2><p>${esc(week.reason||'The saved plan does not cover this period.')}</p><a class="button" href="#accounts">Review balances and dates</a>`}
