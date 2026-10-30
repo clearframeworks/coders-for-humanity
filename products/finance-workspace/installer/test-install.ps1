@@ -1,9 +1,11 @@
 param(
   [Parameter(Mandatory = $true)][string]$InstallerPath,
-  [Parameter(Mandatory = $true)][string]$TestRoot
+  [Parameter(Mandatory = $true)][string]$TestRoot,
+  [string]$PreviousInstallerPath
 )
 $ErrorActionPreference = 'Stop'
 $financeInstaller = (Resolve-Path -LiteralPath $InstallerPath).Path
+$financePreviousInstaller = if ($PreviousInstallerPath) { (Resolve-Path -LiteralPath $PreviousInstallerPath).Path } else { $financeInstaller }
 $financeTestRoot = [IO.Path]::GetFullPath($TestRoot)
 if (Test-Path -LiteralPath $financeTestRoot) { throw 'Choose a new, empty test directory. Existing data is never overwritten by this test.' }
 $financeRegistry = 'HKCU:/Software/Microsoft/Windows/CurrentVersion/Uninstall/{6DB9DAD6-C1D2-4DAA-9806-72C27448E84B}_is1'
@@ -19,7 +21,8 @@ $financeData = Join-Path $financeDataRoot 'CFH/Your finances/runtime'
 $financeOriginalLocal = $env:LOCALAPPDATA
 $financeProof = New-Object System.Collections.Generic.List[string]
 function Invoke-FinanceSetup([string]$Phase) {
-  $financeResult = Start-Process -FilePath $financeInstaller -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="'+$financeApp+'"'),('/LOG="'+(Join-Path $financeTestRoot ($Phase+'.log'))+'"')) -WindowStyle Hidden -Wait -PassThru
+  $financeSetupPath = if ($Phase -eq 'install') { $financePreviousInstaller } else { $financeInstaller }
+  $financeResult = Start-Process -FilePath $financeSetupPath -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',('/DIR="'+$financeApp+'"'),('/LOG="'+(Join-Path $financeTestRoot ($Phase+'.log'))+'"')) -WindowStyle Hidden -Wait -PassThru
   if ($financeResult.ExitCode -ne 0) { throw "$Phase installer failed with exit code $($financeResult.ExitCode)." }
 }
 function Start-FinanceTestApp([switch]$FromShortcut) {

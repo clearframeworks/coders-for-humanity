@@ -7,7 +7,7 @@ import {readFile, stat, realpath} from 'node:fs/promises';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {Store} from './store.mjs';
 import {BrowserDownloads} from './browser-downloads.mjs';
-import {readEmailStatus,readEmailAlerts,reconcileEmailHistory} from './email-alerts.mjs';
+import {readEmailStatus,readEmailAlerts,reconcileEmailHistory,requestEmailCheck,readEmailCheckRequest} from './email-alerts.mjs';
 import {InputError, validateScenario, validateState} from './validation.mjs';
 import {forecast} from '../dist/engine.mjs';
 import {LanAuth} from './lan-auth.mjs';
@@ -102,6 +102,12 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
           auth.requireLocal(session);
           const body = await jsonBody(req);
           return sendJson(res, 200, store.setAiAccess(body?.enabled));
+        }
+        if (pathname === '/api/email-check/request') {
+          auth.requireLocal(session);
+          if (req.method === 'GET') return sendJson(res,200,{request:readEmailCheckRequest(store)});
+          if (req.method === 'POST') return sendJson(res,202,{request:requestEmailCheck(store),message:'Request saved for your email checker. A request does not mean the mailbox has already been checked.'});
+          return sendJson(res,405,{error:'Use GET or POST for email check requests.'});
         }
         if (pathname === '/api/collect' && req.method === 'POST') { auth.requireLocal(session); return sendJson(res, 200, {...await collect(), browserCollection:browserDownloads.status}); }
         if (pathname === '/api/forecast' && req.method === 'GET') return sendJson(res, 200, projectForecast(store.getState()));

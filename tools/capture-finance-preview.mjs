@@ -16,11 +16,11 @@ try {
   page.on('dialog',dialog=>dialog.accept());
   await page.goto(`http://127.0.0.1:${service.server.address().port}/#automation`);
   await page.locator('#load-example').click();
-  await page.locator('aside.sidebar a[href="#forecast/overview"]').click();
-  await page.locator('#chart svg').waitFor();
+  await page.locator('aside.sidebar nav a[href="#home"]').click();
+  await page.locator('#home-outlook').waitFor();
   await page.getByText('Example plan.',{exact:true}).waitFor();
   await mkdir(path.join(root,'assets'),{recursive:true});
-  await page.locator('.forecast-panel').screenshot({path:path.join(root,'assets','your-finances-preview.png')});
+  await page.screenshot({path:path.join(root,'assets','your-finances-preview.png'),fullPage:false});
   await page.setViewportSize({width:1280,height:360});
   await page.setContent(await readFile(path.join(root,'assets','hub-header.svg'),'utf8'));
   await page.locator('svg').screenshot({path:path.join(root,'artifacts','hub-header-preview.png')});
