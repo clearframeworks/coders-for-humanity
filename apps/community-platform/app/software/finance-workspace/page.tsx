@@ -16,7 +16,7 @@ export default function FinanceSoftware() {
         <h1>Know what your money needs to cover.</h1>
         <p>Bring paydays, bills, and spending into one view. See where your balance could dip, try a different plan, and keep the details on your own computer.</p>
         <div className="software-actions">
-          <a className="button primary" href="https://github.com/clearframeworks/coders-for-humanity/releases/download/finance-v1.1.0/Your-Finances-Setup-1.1.0-x64.exe">Download for Windows (.exe)</a>
+          <a className="button primary" href="https://github.com/clearframeworks/coders-for-humanity/releases/download/finance-v1.1.1/Your-Finances-Setup-1.1.1-x64.exe">Download for Windows (.exe)</a>
           <a className="button" href="/downloads/finance-workspace.zip" download>Full source (.zip)</a>
           <a className="button" href="https://github.com/clearframeworks/coders-for-humanity/tree/main/products/finance-workspace">Browse the full source ↗</a>
         </div>
@@ -31,7 +31,7 @@ export default function FinanceSoftware() {
         <section aria-labelledby="features-heading">
           <h2 id="features-heading">A plan you can adjust</h2>
           <ul>
-            <li>Add balances, upcoming income, and recurring bills.</li>
+            <li>Set starting balances; new recorded charges subtract automatically.</li>
             <li>Forecast daily balances and spot possible shortfalls.</li>
             <li>Import transaction CSVs and review spending patterns.</li>
             <li>Compare spending changes before saving a plan.</li>

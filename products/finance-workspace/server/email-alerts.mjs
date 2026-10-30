@@ -160,12 +160,12 @@ export function importEmailMessages(store, messages, {now = new Date().toISOStri
         const candidates=semanticCandidates(state.transactions,alert);
         const claimed=new Set(db.prepare('SELECT matched_transaction_id FROM email_alerts WHERE receipt_id != ? AND matched_transaction_id IS NOT NULL').all(alert.receiptId).map(row=>row.matched_transaction_id));
         const unique=candidates.length===1&&!claimed.has(candidates[0].id);
-        const saved={...alert,needsReview:true,matchMethod:unique?'unique_date_amount_merchant_heuristic':candidates.length?'ambiguous_history':'reported_only'};
+        const saved={...alert,...(typeof messages!=='undefined'&&messages[index]?.internal_date?{receivedAt:new Date(Number(messages[index].internal_date)).toISOString()}:{}),needsReview:true,matchMethod:unique?'unique_date_amount_merchant_heuristic':candidates.length?'ambiguous_history':'reported_only'};
         db.prepare('INSERT INTO email_alerts(receipt_id,data,matched_transaction_id,updated_at) VALUES (?,?,?,?) ON CONFLICT(receipt_id) DO UPDATE SET data=excluded.data,matched_transaction_id=excluded.matched_transaction_id,updated_at=excluded.updated_at').run(alert.receiptId,JSON.stringify(saved),unique?candidates[0].id:null,timestamp);
         db.prepare('INSERT INTO email_alert_messages(message_id,receipt_id,digest) VALUES (?,?,?)').run(alert.messageId,alert.receiptId,digest);
         if(unique)result.matched++;result.review++;continue;
       }
-      let saved = {...alert, needsReview:false, matchMethod:null}, matchedId = record?.matched_transaction_id || null;
+      let saved = {...alert,...(messages[index]?.internal_date?{receivedAt:new Date(Number(messages[index].internal_date)).toISOString()}:{}), needsReview:false, matchMethod:null}, matchedId = record?.matched_transaction_id || null;
       // A later delivery of an older pending alert must not reverse completion.
       if (previous?.status === 'completed' && alert.status === 'pending') {
         result.duplicates++;
@@ -321,3 +321,11 @@ export function requestEmailCheck(store,{now=new Date().toISOString()}={}){
   }catch(error){db.exec('ROLLBACK');throw error}
 }
 export function readEmailCheckRequest(store){return emailMetadata(store,'email_check_request');}
+
+/** Sanitized charge identities for calculated balances; snapshots stay unchanged. */
+export function readBalanceReceipts(store){
+  if(!hasSchema(store.db))return [];
+  const rows=store.db.prepare('SELECT data,matched_transaction_id FROM email_alerts ORDER BY receipt_id LIMIT 20001').all();
+  if(rows.length>20000)throw new InputError('Receipt history exceeds the balance calculation limit.');
+  return rows.map(row=>{const a=JSON.parse(row.data);return {receiptId:a.receiptId,provider:a.provider,merchant:a.merchant,paymentKind:a.paymentKind,cashAppType:a.cashAppType,date:a.date,amount:a.amount,status:a.status,receivedAt:a.receivedAt||null,matchMethod:a.matchMethod||null,needsReview:!!a.needsReview,matchedTransactionId:row.matched_transaction_id||null};});
+}

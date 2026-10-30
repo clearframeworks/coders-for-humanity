@@ -63,6 +63,7 @@ export function mountPlanFlow({root=document}={}) {
     resume(fresh){if(!resumable||fresh!==freshMode)return false;dialog.showModal();show(current);return true;},
     open(fresh){freshMode=fresh;resumable=true;form.querySelector('.dialog-intro').textContent='Start with what you know. Nothing is saved until the final step.';show(0,false);},
     focus(){show(current);},
+    showStep(index){show(index);},
     saved(){resumable=false;},
     reset(){resumable=false;},
     getStep:()=>current

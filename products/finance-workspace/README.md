@@ -2,7 +2,7 @@
 
 Free personal cash-flow planning, bills, transaction imports and spending comparisons. Runs on your own computer, with no account or AI subscription required. Full editable source is included under the MIT license.
 
-**Windows installer:** run **Your-Finances-Setup-1.1.0-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
+**Windows installer:** run **Your-Finances-Setup-1.1.1-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
 
 Your installed data is kept in `%LOCALAPPDATA%/CFH/Your finances/runtime`, separately from the app. Updates and uninstall preserve it. To stop the service, use **Stop Your finances** in the Start menu. Closing the browser leaves the local service running. Export backups in the app.
 
@@ -34,4 +34,4 @@ For development, run `npm test`. Source lives in `dist/` (browser code), `server
 
 The screen refreshes saved data every minute while the app runs. Mailbox collection is a separate, optional connection: Settings shows its last actual check, pending request, and any error. A fresh installation does not include access to your email.
 
-Receipt imports keep completed, pending and unverified activity distinct. A purchase email does not verify your account balance. Saved balance dates remain visible; importing the same email again does not deduct it from your funds again.
+Your calculated balance starts with the amount and date you enter, subtracts new charges and adds known credits. Pending and reported charges reserve funds once. Matching statement records and repeated emails do not deduct the same payment again. Choose the charge source for each account in Accounts; setting a fresh starting balance absorbs already known activity. Original starting balances and transaction history are preserved.

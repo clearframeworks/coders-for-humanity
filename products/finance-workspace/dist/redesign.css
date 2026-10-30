@@ -362,3 +362,9 @@ dialog::backdrop { background: #132d3e80; backdrop-filter: blur(2px); }
 .notice-dismiss { flex-shrink:0; min-height:32px; }
 #retry-loading { margin-bottom:24px; }
 @media(max-width:700px){.notice {gap:12px;flex-wrap:wrap}.mode-banner {padding:10px 12px;margin-bottom:18px}}
+
+.running-balance {padding:20px 0}.running-balance>div>strong {font-size:32px;font-variant-numeric:tabular-nums}.running-balance>p {flex-basis:100%;margin:0;font-size:13px;color:var(--muted)}.running-account {align-items:start}.running-account>div {flex:1}.running-account label {max-width:280px;margin-top:12px}.running-account p {margin:6px 0}.running-account-amount {font-size:28px;white-space:nowrap}@media(max-width:700px){.running-account{gap:14px}.running-account>div {flex-basis:100%}.running-balance>div>strong{font-size:30px}}
+
+.entry-row.account-row{grid-template-columns:2fr 1fr 1fr 44px}@media(max-width:700px){.entry-row.account-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px}.account-row>label:first-child{grid-column:1/-1}.account-row>label{min-width:0}.account-row input{min-width:0}}
+
+.account-row>.account-rebase{grid-column:1/-1;display:flex;align-items:center;gap:10px;min-height:44px}.account-rebase input{width:20px;min-height:20px;margin:0}.account-row>.remove-row{grid-column:-2;grid-row:1}@media(max-width:700px){.account-row>.remove-row{grid-row:2}.account-row>label:first-child{grid-column:1/-1;padding-right:0}}
