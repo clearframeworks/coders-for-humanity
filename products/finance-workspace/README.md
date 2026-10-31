@@ -2,7 +2,7 @@
 
 Free personal cash-flow planning, bills, transaction imports and spending comparisons. Runs on your own computer, with no account or AI subscription required. Full editable source is included under the MIT license.
 
-**Windows installer:** run **Your-Finances-Setup-1.1.1-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
+**Windows installer:** run **Your-Finances-Setup-1.1.2-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
 
 Your installed data is kept in `%LOCALAPPDATA%/CFH/Your finances/runtime`, separately from the app. Updates and uninstall preserve it. To stop the service, use **Stop Your finances** in the Start menu. Closing the browser leaves the local service running. Export backups in the app.
 

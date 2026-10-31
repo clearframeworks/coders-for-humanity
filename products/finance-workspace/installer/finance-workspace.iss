@@ -10,7 +10,7 @@
 [Setup]
 AppId={{6DB9DAD6-C1D2-4DAA-9806-72C27448E84B}
 AppName=Your finances
-AppVersion=1.1.1
+AppVersion=1.1.2
 AppPublisher=Coders for Humanity
 AppPublisherURL=https://github.com/clearframeworks/coders-for-humanity
 DefaultDirName={localappdata}\Programs\CFH\Your finances
@@ -24,7 +24,7 @@ DisableDirPage=yes
 WizardStyle=modern
 LicenseFile={#ProductSource}\LICENSE
 OutputDir={#InstallerOutput}
-OutputBaseFilename=Your-Finances-Setup-1.1.1-x64
+OutputBaseFilename=Your-Finances-Setup-1.1.2-x64
 Compression=lzma2
 SolidCompression=yes
 CloseApplications=no
