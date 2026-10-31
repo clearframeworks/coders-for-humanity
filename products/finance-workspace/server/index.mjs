@@ -11,8 +11,6 @@ import {readEmailStatus,readBalanceReceipts,readEmailAlerts,reconcileEmailHistor
 import {InputError, validateScenario, validateState} from './validation.mjs';
 import {forecast} from '../dist/engine.mjs';
 import {LanAuth} from './lan-auth.mjs';
-import {BankingService} from './banking.mjs';
-import {randomBytes} from 'node:crypto';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const MAX_BODY = 2 * 1024 * 1024;
@@ -26,7 +24,7 @@ async function jsonBody(req) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new InputError('Request body must contain valid JSON.'); }
 }
 
-export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0.0' : '127.0.0.1', lanAddresses, now = Date.now, runtimeDir = resolveRuntimeDir(), distDir = path.join(ROOT, 'dist'), intervalMs = 60000, initialState, autoCollect = true, autoBankSync = true, bankOptions = {}} = {}) {
+export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0.0' : '127.0.0.1', lanAddresses, now = Date.now, runtimeDir = resolveRuntimeDir(), distDir = path.join(ROOT, 'dist'), intervalMs = 60000, initialState, autoCollect = true} = {}) {
   if (typeof lan !== 'boolean') throw new Error('LAN mode must be explicitly true or false.');
   if (!['127.0.0.1', '::1', ...(lan ? ['0.0.0.0'] : [])].includes(host)) throw new Error('Finance service must bind to loopback unless LAN mode is explicitly enabled.');
   if (!Number.isInteger(port) || port < 0 || port > 65535) throw new Error('Choose a port from 0 to 65535.');
@@ -39,8 +37,6 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
     catch { browserDownloads.status = {...browserDownloads.status,lastCheck:new Date().toISOString(),errors:[{message:'Browser download collection is paused. Check its local folder configuration.'}]}; }
     return store.collect();
   };
-  let banking;
-  try { banking = new BankingService(store, bankOptions); } catch (error) { store.close(); throw error; }
   store.intervalMs = intervalMs; store.automationEnabled = autoCollect;
   const staticRoot = path.resolve(distDir);
   const server = http.createServer(async (req, res) => {
@@ -50,8 +46,6 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
       const boundPort = server.address()?.port;
       const requestedHost = req.headers.host;
       const session = auth.inspect(req, boundPort);
-      const pageNonce = session.isLocal && banking.readiness.configured ? randomBytes(18).toString('base64') : null;
-      if (pageNonce) res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' 'nonce-${pageNonce}' https://cdn.plaid.com/link/v2/stable/link-initialize.js; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://production.plaid.com; frame-src https://cdn.plaid.com; base-uri 'none'; frame-ancestors 'none'`);
       if (req.headers.origin && req.headers.origin !== `http://${requestedHost}`) throw new InputError('Cross-origin requests are not allowed.', 403);
       if (req.headers['sec-fetch-site'] === 'cross-site') throw new InputError('Cross-site requests are not allowed.', 403);
       const rawPath = (req.url || '/').split('?')[0];
@@ -76,15 +70,6 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
           if (pathname === '/api/phone-access/pairing' && req.method === 'POST') return sendJson(res, 200, auth.createPairing());
           if (pathname === '/api/phone-access/revoke' && req.method === 'POST') { auth.revoke(); return sendJson(res, 200, auth.status(boundPort)); }
           return sendJson(res, 404, {error: 'API route or method not found.'});
-        }
-        if (pathname.startsWith('/api/banking/')) {
-          auth.requireLocal(session);
-          if (pathname === '/api/banking/status' && req.method === 'GET') return sendJson(res, 200, banking.status());
-          if (pathname === '/api/banking/link-token' && req.method === 'POST') return sendJson(res, 200, await banking.createLinkToken(await jsonBody(req)));
-          if (pathname === '/api/banking/exchange' && req.method === 'POST') return sendJson(res, 200, await banking.exchange(await jsonBody(req)));
-          if (pathname === '/api/banking/sync' && req.method === 'POST') return sendJson(res, 200, await banking.sync((await jsonBody(req))?.itemId));
-          if (pathname === '/api/banking/disconnect' && req.method === 'POST') return sendJson(res, 200, await banking.disconnect((await jsonBody(req))?.itemId));
-          return sendJson(res, 404, {error: 'Banking API route or method not found.'});
         }
         auth.requireAuthorized(session);
         if (pathname === '/api/balance-activity' && req.method === 'GET') return sendJson(res, 200, readBalanceReceipts(store));
@@ -125,8 +110,7 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
         const realRelative = path.relative(realRoot, realTarget);
         if (realRelative.startsWith('..') || path.isAbsolute(realRelative)) return sendJson(res, 403, {error: 'Invalid file path.'});
         const info = await stat(target); if (!info.isFile()) throw new Error('Not a file');
-        let bytes = await readFile(target);
-        if (pageNonce && path.extname(target) === '.html') bytes = Buffer.from(bytes.toString('utf8').replace('</head>', `<meta name="plaid-csp-nonce" content="${pageNonce}"></head>`));
+        const bytes = await readFile(target);
         res.writeHead(200, {'Content-Type': TYPES[path.extname(target)] || 'application/octet-stream', 'Content-Length': bytes.length});
         return res.end(req.method === 'HEAD' ? undefined : bytes);
       } catch { return sendJson(res, 404, {error: 'File not found.'}); }
@@ -140,7 +124,6 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
   // A user must grant access again after a successful service restart. Merely
   // importing Store or a failed competing launch must not change an active lease.
   store.setAiAccess(false);
-  if (autoBankSync) banking.start();
   let timer;
   if (autoCollect) {
     const scan = () => collect().catch(error => console.error(`Import scan failed: ${error.message}`));
@@ -148,12 +131,11 @@ export async function startServer({port = 4317, lan = false, host = lan ? '0.0.0
   }
   let closed = false;
   const url = `http://${host === '::1' ? '[::1]' : '127.0.0.1'}:${server.address().port}`;
-  return {server, store, banking, url, lanUrls: auth.status(server.address().port).urls, async close() {
+  return {server, store, url, lanUrls: auth.status(server.address().port).urls, async close() {
     if (closed) return; closed = true; clearInterval(timer); auth.revoke();
     await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     if (browserDownloads.running) await browserDownloads.running;
     if (store.collecting) await store.collecting;
-    await banking.close();
     store.close();
   }};
 }
