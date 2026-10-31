@@ -6,7 +6,7 @@ From the repository root, with Python and the Inno Setup compiler installed:
 
 ```powershell
 ./tools/build-finance-installer.ps1 -CompilerPath 'C:/path/to/ISCC.exe' -WorkDirectory 'C:/new/staging-folder' -OutputDirectory 'C:/new/output-folder'
-./products/finance-workspace/installer/test-install.ps1 -InstallerPath 'C:/new/output-folder/Your-Finances-Setup-1.1.1-x64.exe' -TestRoot 'C:/new/test-folder'
+./products/finance-workspace/installer/test-install.ps1 -InstallerPath 'C:/new/output-folder/Your-Finances-Setup-1.1.2-x64.exe' -TestRoot 'C:/new/test-folder'
 ```
 
 The test requires an account with no existing Your finances installation or shortcuts. It uses an isolated data directory and verifies installation, shortcut startup, active upgrade, uninstall and reinstall. It preserves its synthetic test data and logs for review.

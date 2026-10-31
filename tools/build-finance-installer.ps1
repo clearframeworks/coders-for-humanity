@@ -10,7 +10,7 @@ $financeRepository = Split-Path -Parent $PSScriptRoot
 $financeCompiler = (Resolve-Path -LiteralPath $CompilerPath).Path
 $financeWork = [IO.Path]::GetFullPath($WorkDirectory)
 $financeOutput = [IO.Path]::GetFullPath($OutputDirectory)
-$financeInstallerName = 'Your-Finances-Setup-1.1.1-x64.exe'
+$financeInstallerName = 'Your-Finances-Setup-1.1.2-x64.exe'
 if (Test-Path -LiteralPath $financeWork) { throw 'WorkDirectory must be a new directory. Existing paths are never deleted or reused by this builder.' }
 if (Test-Path -LiteralPath (Join-Path $financeOutput $financeInstallerName)) { throw 'OutputDirectory already contains this installer. Choose a fresh output directory.' }
 if (-not (Test-Path -LiteralPath $financeCompiler -PathType Leaf)) { throw 'CompilerPath must point to ISCC.exe.' }
@@ -54,7 +54,7 @@ try {
   $financeRevision = (& git rev-parse HEAD).Trim()
   $financeDirty = [bool](& git status --porcelain)
   $financeManifest = [ordered]@{
-    product = 'Your finances'; version = '1.1.1'; architecture = 'x64'
+    product = 'Your finances'; version = '1.1.2'; architecture = 'x64'
     installer = $financeInstallerName; installerSha256 = $financeInstallerHash
     sourceArchive = 'finance-workspace.zip'; sourceArchiveSha256 = $financeSourceHash
     nodeVersion = $financeNodeVersion; nodeArchiveSha256 = $financeNodeZipHash; nodeExecutableSha256 = $financeNodeExeHash

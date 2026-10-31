@@ -8,7 +8,7 @@ Every app below includes its complete editable source. Download a product on its
 
 Plan paydays, bills, and daily spending, import transaction CSVs, and compare changes before saving a plan. Your records stay on your computer. AI is optional and off by default.
 
-**[Windows installer](https://github.com/clearframeworks/coders-for-humanity/releases/download/finance-v1.1.1/Your-Finances-Setup-1.1.1-x64.exe)** · [Full source ZIP](https://github.com/clearframeworks/coders-for-humanity/raw/refs/heads/main/apps/community-platform/public/downloads/finance-workspace.zip) · [Browse source](finance-workspace/) · [Product page](https://cfh.retehost.com/software/finance-workspace)
+**[Windows installer](https://github.com/clearframeworks/coders-for-humanity/releases/download/finance-v1.1.2/Your-Finances-Setup-1.1.2-x64.exe)** · [Full source ZIP](https://github.com/clearframeworks/coders-for-humanity/raw/refs/heads/main/apps/community-platform/public/downloads/finance-workspace.zip) · [Browse source](finance-workspace/) · [Product page](https://cfh.retehost.com/software/finance-workspace)
 
 Windows x64: run the installer, then open the desktop or Start menu shortcut. It includes its runtime and preserves financial records across upgrades and uninstall. The installer is unsigned; Windows may show a publisher warning. The portable source ZIP also runs with **Start-Finances.cmd**. On macOS or Linux, use Node.js 24 or newer and `npm start`. ARM64 portable setup remains untested on ARM hardware. [More about the app](finance-workspace/README.md).
 

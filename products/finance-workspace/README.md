@@ -2,7 +2,7 @@
 
 Free personal cash-flow planning, bills, transaction imports and spending comparisons. Runs on your own computer, with no account or AI subscription required. Full editable source is included under the MIT license.
 
-**Windows installer:** run **Your-Finances-Setup-1.1.1-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
+**Windows installer:** run **Your-Finances-Setup-1.1.2-x64.exe**, install for your account, then open **Your finances** from your desktop or Start menu. Node.js is included; no terminal or administrator account is needed. The installer is unsigned; Windows may show an unknown-publisher or SmartScreen prompt.
 
 Your installed data is kept in `%LOCALAPPDATA%/CFH/Your finances/runtime`, separately from the app. Updates and uninstall preserve it. To stop the service, use **Stop Your finances** in the Start menu. Closing the browser leaves the local service running. Export backups in the app.
 
@@ -24,7 +24,7 @@ The normal app makes no model requests. To let a compatible local MCP client rea
 
 Generic CSV, Cash App statement exports and Fifth Third CSV exports are supported. Drop complete CSV files into the `inbox/` folder under your data directory for automatic import while the service runs, or import in the app. Neither manual entry nor statement import needs a bank connection.
 
-The included browser collector and bank adapter are optional. Live bank sync needs your own approved Plaid production access and bank consent; it is not preconfigured. Run `node scripts/configure-plaid.mjs` only if you choose to set it up. Never share the `runtime/` folder: it contains your database, imported files, private configuration and any bank encryption keys.
+The included browser collector is optional. It works in your own signed-in browser and never sends your bank sign-in or data to a third-party aggregator. Never share the `runtime/` folder: it contains your database, imported files and private configuration.
 
 Forecasts depend on the balances, dates and spending you enter. Review suggested transaction categories and estimates before relying on them. Imported history does not automatically change your available-money snapshot.
 
