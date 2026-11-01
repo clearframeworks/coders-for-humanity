@@ -368,3 +368,38 @@ test("private member sees clear participation recovery; account remains accessib
   await page.goto("/account");
   await expect(page).toHaveURL(/\/login\?next=/);
 });
+
+test("narrow member screens reflow and enlarged text does not clip the brand or username prefix", async ({ page, context, request }) => {
+  await signIn(context, request, "alice");
+  await page.setViewportSize({ width: 320, height: 844 });
+  for (const route of ["/account", "/workspace", "/projects/community-platform?tab=members"]) {
+    await page.goto(route);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), route).toBeTruthy();
+  }
+  await capture(page, "narrow-project-members-320");
+  await context.clearCookies();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/join");
+  await page.getByLabel("Username (required)").fill("test-enlarged-text");
+  // Explicit text-enlargement emulation, not a claim of native browser zoom.
+  await page.evaluate(() => {
+    const sizes = Array.from(document.querySelectorAll<HTMLElement>("*")).map(element => {
+      const style = getComputedStyle(element);
+      return { element, font: parseFloat(style.fontSize) * 2, line: parseFloat(style.lineHeight) * 2 };
+    });
+    for (const { element, font, line } of sizes) {
+      if (Number.isFinite(font)) element.style.setProperty("font-size", `${font}px`, "important");
+      if (Number.isFinite(line)) element.style.setProperty("line-height", `${line}px`, "important");
+    }
+  });
+  const geometry = await page.evaluate(() => {
+    const brand = document.querySelector<HTMLElement>(".brand > span")!.getBoundingClientRect();
+    const sidebar = document.querySelector<HTMLElement>(".sidebar")!.getBoundingClientRect();
+    const prefix = document.querySelector<HTMLElement>(".username-input > span")!.getBoundingClientRect();
+    const input = document.querySelector<HTMLInputElement>(".username-input input")!;
+    return { brandInside: brand.left >= sidebar.left && brand.right <= sidebar.right, prefixGap: input.getBoundingClientRect().left + parseFloat(getComputedStyle(input).paddingLeft) - prefix.right };
+  });
+  expect(geometry.brandInside).toBeTruthy();
+  expect(geometry.prefixGap).toBeGreaterThanOrEqual(4);
+  await capture(page, "enlarged-text-200-emulated");
+});

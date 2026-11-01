@@ -16,7 +16,7 @@ This environment tests the actual application with synthetic identities and a lo
 | Persistent query error | Member-page error boundary, visible retry, public header and account reload recovery | Nonretryable test query error, then normal database read |
 | Private contributor and sign-out | Participation guidance, account accessibility scan, sign-out, protected-page redirect | Private profile remains private; test cookie removed |
 
-The system suite runs these journeys at 390px touch/mobile and 1440px desktop. It complements the production-build public browser suite (including search/filter, theme, local draft recovery, documents/downloads, public route and automated accessibility checks), the unit suite and the database tests. The database tests independently exercise wrong-user edits, authority escalation, competing claims, hidden threads, rate limits, self-review and stale-version rejection.
+The system suite runs these journeys at 390px touch/mobile and 1440px desktop, with additional 320px reflow and 200% computed-text enlargement stress checks. Text enlargement is explicitly emulated and is not native browser zoom. It complements the production-build public browser suite (including search/filter, theme, local draft recovery, documents/downloads, public route and automated accessibility checks), the unit suite and the database tests. The database tests independently exercise wrong-user edits, authority escalation, competing claims, hidden threads, rate limits, self-review and stale-version rejection.
 
 ## Evidence rules
 
