@@ -18,9 +18,11 @@ const steps = ["Introduce yourself", "Your contribution", "Review & join"];
 export function ProfileOnboarding({
   connected,
   authenticated,
+  githubEnabled = false,
 }: {
   connected: boolean;
   authenticated: boolean;
+  githubEnabled?: boolean;
 }) {
   const router = useRouter();
   const [profile, setProfile] = useState<ProfileDraft>(emptyProfile);
@@ -394,7 +396,7 @@ export function ProfileOnboarding({
                 Your draft stays in this browser. After verification, review it
                 here and choose Create profile.
               </p>
-              <LoginForm next="/join" disabled={false} intent="signup" />
+              <LoginForm next="/join" disabled={false} intent="signup" githubEnabled={githubEnabled} />
             </div>
           )}
           {step === 2 && !connected && (
