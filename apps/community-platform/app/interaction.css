@@ -1,0 +1,23 @@
+/* Shared interaction rules: keep controls usable without changing the visual identity. */
+.navigation-heading, .navigation-backdrop { display: none; }
+main { scroll-margin-top: 76px; }
+.field input, .field textarea, .field select { scroll-margin-block: 90px; }
+@media (max-width: 640px) {
+  .mobile-bar { height: 60px; }
+  .mobile-bar button, .navigation-close { min-width: 44px; min-height: 44px; }
+  .navigation-backdrop { display: block; position: fixed; inset: 0; z-index: 60; border: 0; background: #081e2c99; }
+  .sidebar.is-open { inset: 0 auto 0 0; width: min(340px, calc(100vw - 24px)); z-index: 70; padding: 16px 18px 28px; overscroll-behavior: contain; }
+  .sidebar.is-open nav { display: block; }
+  .navigation-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; font-size: 18px; }
+  .navigation-close { display: grid; place-items: center; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+  .sidebar nav a { min-height: 44px; font-size: 14px; }
+  .sidebar-bottom > a { min-height: 44px; }
+  .topbar { min-height: 56px; height: auto; padding-block: 6px; }
+  .topbar-actions .signin, .topbar-actions .search-link { min-height: 44px; display: inline-flex; align-items: center; }
+  .field input, .field select, .field textarea { font-size: 16px; }
+  .button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

@@ -25,6 +25,14 @@ function actions(db: any, github = false) {
 }
 const profile = { username: "member", name: "Member", bio: "", location: "", availability: "", github_url: "", website_url: "", is_public: false };
 
+test("invalid profile fields return actionable field feedback before authentication or writes", async () => {
+  const db = { auth: { getUser: () => { throw new Error("Invalid profile must not reach authentication"); } } };
+  const result = await actions(db).saveProfile({ ...profile, username: "Wrong Name" });
+  assert.equal(result.field, "username");
+  assert.match(result.error, /3–40 lowercase letters/);
+  assert.equal(result.message, undefined);
+});
+
 test("profile success requires a returned own row; silent denied updates never succeed", async () => {
   for (const existing of [true, false]) {
     for (const saved of [null, { id: "other", username: "member", is_public: false }, { id: "self", username: "member", is_public: false }]) {

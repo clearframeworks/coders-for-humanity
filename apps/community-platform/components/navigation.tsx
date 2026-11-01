@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ThemeSettings } from "./theme-settings";
 import {
   ArrowUpRight,
@@ -54,16 +54,68 @@ const groups = [
     ],
   },
 ] as const;
-export function Navigation() {
+export function Navigation({ authenticated = false }: { authenticated?: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [mobile, setMobile] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const toggle = useRef<HTMLButtonElement>(null);
+  const mobileBar = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px)");
+    function resize() {
+      setMobile(query.matches);
+      if (!query.matches) setOpen(false);
+    }
+    resize();
+    query.addEventListener("change", resize);
+    return () => query.removeEventListener("change", resize);
+  }, []);
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open || !mobile) return;
+    const panel = sidebar.current;
+    const workspace = document.querySelector<HTMLElement>(".workspace");
+    const bar = mobileBar.current;
+    const previousOverflow = document.body.style.overflow;
+    const previousInert = workspace?.inert ?? false;
+    document.body.style.overflow = "hidden";
+    if (workspace) workspace.inert = true;
+    if (bar) bar.inert = true;
+    const controls = () => Array.from(panel?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex="0"]',
+    ) || []).filter(element => element.getClientRects().length > 0);
+    controls()[0]?.focus();
+    function keydown(event: KeyboardEvent) {
+      if (event.key === "Escape") { event.preventDefault(); setOpen(false); }
+      if (event.key === "Tab") {
+        const items = controls();
+        const first = items[0];
+        const last = items.at(-1);
+        if (event.shiftKey && (document.activeElement === first || !panel?.contains(document.activeElement))) {
+          event.preventDefault(); last?.focus();
+        } else if (!event.shiftKey && (document.activeElement === last || !panel?.contains(document.activeElement))) {
+          event.preventDefault(); first?.focus();
+        }
+      }
+    }
+    document.addEventListener("keydown", keydown);
+    return () => {
+      document.removeEventListener("keydown", keydown);
+      document.body.style.overflow = previousOverflow;
+      if (workspace) workspace.inert = previousInert;
+      if (bar) bar.inert = false;
+      toggle.current?.focus();
+    };
+  }, [open, mobile]);
   return (
     <>
-      <div className="mobile-bar">
+      <div className="mobile-bar" ref={mobileBar}>
         <Link href="/">
           Coders <em>for</em> Humanity
         </Link>
         <button
+          ref={toggle}
           aria-expanded={open}
           aria-controls="main-navigation"
           aria-label={open ? "Close navigation" : "Open navigation"}
@@ -72,10 +124,18 @@ export function Navigation() {
           {open ? <X /> : <Menu />}
         </button>
       </div>
+      {open && mobile && <button className="navigation-backdrop" aria-label="Close navigation backdrop" tabIndex={-1} onClick={() => setOpen(false)} />}
       <aside
+        ref={sidebar}
         className={`sidebar ${open ? "is-open" : ""}`}
         id="main-navigation"
+        role={open && mobile ? "dialog" : undefined}
+        aria-modal={open && mobile ? true : undefined}
+        aria-label={open && mobile ? "Site navigation" : undefined}
+        aria-hidden={mobile && !open ? true : undefined}
+        inert={mobile && !open ? true : undefined}
       >
+        <div className="navigation-heading"><strong>Explore CFH</strong><button className="navigation-close" aria-label="Close navigation" onClick={() => setOpen(false)}><X size={20} /></button></div>
         <Link
           className="brand"
           href="/"
@@ -106,7 +166,7 @@ export function Navigation() {
                       ? "active"
                       : ""
                   }
-                  aria-current={pathname === href ? "page" : undefined}
+                  aria-current={pathname === href || (href !== "/" && pathname.startsWith(href + "/")) ? "page" : undefined}
                 >
                   <Icon size={18} strokeWidth={1.7} />
                   {name}
@@ -121,10 +181,10 @@ export function Navigation() {
         <div className="sidebar-bottom">
           <Link
             className="button primary sidebar-join"
-            href="/join"
+            href={authenticated ? "/account" : "/join"}
             onClick={() => setOpen(false)}
           >
-            Create profile <ArrowRight size={15} />
+            {authenticated ? "My account" : "Create profile"} <ArrowRight size={15} />
           </Link>
           <ThemeSettings />
           <div className="open-mark">
@@ -139,7 +199,7 @@ export function Navigation() {
     </>
   );
 }
-export function Topbar() {
+export function Topbar({ authenticated = false }: { authenticated?: boolean }) {
   const router = useRouter();
   const [shortcutsReady, setShortcutsReady] = useState(false);
   useEffect(() => {
@@ -184,12 +244,13 @@ export function Topbar() {
           <span>Search</span>
           <kbd>/</kbd>
         </Link>
-        <Link className="signin" href="/login">
-          Sign in <ArrowRight size={15} />
-        </Link>
-        <Link className="button primary" href="/join">
-          Create profile
-        </Link>
+        {authenticated ? <>
+          <Link className="signin" href="/account">My account</Link>
+          <Link className="button primary" href="/workspace">My workspace <ArrowRight size={15} /></Link>
+        </> : <>
+          <Link className="signin" href="/login">Sign in <ArrowRight size={15} /></Link>
+          <Link className="button primary" href="/join">Create profile</Link>
+        </>}
       </div>
     </div>
   );

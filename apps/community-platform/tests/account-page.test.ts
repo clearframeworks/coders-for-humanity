@@ -112,7 +112,7 @@ test("optional account fixture browser captures at mobile and desktop widths", {
   const { chromium } = await import("@playwright/test");
   const output = resolve(process.env.CFH_ACCOUNT_CAPTURE_DIR!);
   mkdirSync(output, { recursive: true });
-  const css = ["globals", "hub", "people-first"].map((name) => readFileSync(`app/${name}.css`, "utf8")).join("\n");
+  const css = ["globals", "hub", "people-first", "interaction"].map((name) => readFileSync(`app/${name}.css`, "utf8")).join("\n");
   const browser = await chromium.launch({ headless: true, ...(process.env.CFH_CHROMIUM_PATH ? { executablePath: process.env.CFH_CHROMIUM_PATH } : {}) });
   const captures: object[] = [];
   try {

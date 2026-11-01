@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient, configured, isDemo, githubAuthEnabled } from "@/lib/supabase";
 import { proposalSchema, profileSchema } from "@/lib/validation";
 import { safeNext } from "@/lib/filters";
-export type ActionState = { error?: string; message?: string; id?: string };
+export type ActionState = { error?: string; message?: string; id?: string; field?: string };
 function siteUrl() {
   const url = process.env.NEXT_PUBLIC_SITE_URL;
   if (!url) throw new Error("The site URL is not configured.");
@@ -91,7 +91,21 @@ export async function claimTask(taskId: string): Promise<ActionState> {
 }
 export async function saveProfile(payload: unknown): Promise<ActionState> {
   try {
-    const data = profileSchema.parse(payload);
+    const parsed = profileSchema.safeParse(payload);
+    if (!parsed.success) {
+      const field = String(parsed.error.issues[0]?.path[0] || "");
+      const guidance: Record<string, string> = {
+        username: "Choose a username with 3–40 lowercase letters, numbers, or hyphens. Start with a letter or number.",
+        name: "Add a display name of up to 100 characters.",
+        bio: "Keep your introduction under 2,000 characters.",
+        location: "Keep your location under 100 characters.",
+        availability: "Keep your availability under 100 characters.",
+        github_url: "Use a GitHub profile address such as https://github.com/your-name.",
+        website_url: "Use a complete HTTPS website address, or leave this field blank.",
+      };
+      return { error: guidance[field] || "Check your profile fields and try again.", field };
+    }
+    const data = parsed.data;
     const { db, user } = await member();
     const values = {
       ...data,
@@ -112,6 +126,7 @@ export async function saveProfile(payload: unknown): Promise<ActionState> {
       .single();
     if (error)
       return {
+        field: error.code === "23505" ? "username" : undefined,
         error:
           error.code === "23505"
             ? "That username is already in use."

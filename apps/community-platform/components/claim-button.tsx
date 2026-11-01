@@ -6,10 +6,12 @@ export function ClaimButton({
   id,
   demo,
   status,
+  authenticated,
 }: {
   id: string;
   demo: boolean;
   status: string;
+  authenticated: boolean;
 }) {
   const [state, setState] = useState<ActionState>({});
   const [pending, start] = useTransition();
@@ -24,6 +26,7 @@ export function ClaimButton({
         </div>
       ) : (
         <>
+          {!authenticated && status === "OPEN" ? <Link className="button primary" href={`/login?next=${encodeURIComponent("/work/" + id)}`}>Sign in to claim this task</Link> :
           <button
             className="button primary"
             disabled={pending || status !== "OPEN" || !!state.message}
@@ -36,7 +39,8 @@ export function ClaimButton({
                 : status === "OPEN"
                   ? "Claim this task"
                   : "Task unavailable"}
-          </button>
+          </button>}
+          {state.message && <p><Link className="button" href="/workspace">Open my workspace →</Link></p>}
           <p className="form-help">
             A signed-in contributor profile is required.{" "}
             <Link href={`/login?next=${encodeURIComponent("/work/" + id)}`}>

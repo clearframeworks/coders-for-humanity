@@ -5,6 +5,8 @@ node_modules
 artifacts
 test-results
 playwright-report
+tests
+playwright*.config.ts
 *.tsbuildinfo
 *.log
 BUILD-SPECIFICATION.md

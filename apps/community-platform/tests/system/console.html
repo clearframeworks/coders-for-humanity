@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CFH local test environment</title><style>
+body{margin:0;background:#f3f6f7;color:#172a35;font:17px/1.6 system-ui,sans-serif}main{max-width:740px;margin:40px auto;padding:24px}h1{line-height:1.2}.banner{background:#fff2c7;border-left:5px solid #936000;padding:16px;font-weight:700}a{color:#006c62;text-underline-offset:3px}a:focus-visible,button:focus-visible{outline:3px solid #137ca0;outline-offset:4px}ul{padding:0;list-style:none;border-top:1px solid #bdcbd0}li{padding:16px 0;border-bottom:1px solid #bdcbd0}li a{font-weight:700;display:inline-block;min-height:32px;padding-top:8px}li span{display:block;color:#455d68}button{font:inherit;padding:10px 16px;border:1px solid #637e88;border-radius:4px;background:white;cursor:pointer}small{display:block;color:#455d68}#status{min-height:2em}
+</style></head><body><main>
+<p class="banner">LOCAL TEST ENVIRONMENT — synthetic profiles and data</p>
+<h1>Try CFH as a contributor.</h1>
+<p>Choose a test person to open the actual application. Profiles, conversations and task changes stay in this temporary local database. Nothing here updates the live CFH community.</p>
+<ul>__TEST_PERSONAS__<li><a href="/__test/login?persona=guest">Browse as a guest</a><span>Clear the local session and return to the community home.</span></li></ul>
+<p>Alice can claim a task and submit evidence. Switch to Bruno to review it independently. Chris starts with a private profile; Newcomer can create a profile.</p>
+<p><a href="http://127.0.0.1:3101/">Open the local CFH application</a>. Return to this page to switch people.</p>
+<h2>Start over</h2><p>Reset removes all changes in this local environment and restores its starting test data.</p>
+<button id="reset" type="button">Reset local test data</button><p id="status" role="status"></p>
+<small>Email delivery, GitHub sign-in and external service activity are not connected. Test sessions are synthetic. Restarting the app snapshot is required after source changes.</small>
+</main><script>
+document.getElementById('reset').addEventListener('click',async function(){
+ if(!confirm('Delete the local test changes and restore the starting synthetic data?'))return;
+ this.disabled=true;const status=document.getElementById('status');status.textContent='Resetting local test data…';
+ try{const response=await fetch('/__test/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:'reset-local-fixture'})});if(!response.ok)throw Error();status.textContent='Local test data reset. Choose a person above to continue.';}catch{status.textContent='The reset could not finish. Check that the local test backend is running and try again.';}finally{this.disabled=false;}
+});
+</script></body></html>

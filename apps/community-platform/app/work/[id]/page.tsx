@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getCatalog } from "@/lib/catalog";
 import { PageIntro, Badge, DemoNote } from "@/components/ui";
 import { ClaimButton } from "@/components/claim-button";
-import { communityReady } from "@/lib/community";
+import { communityReady, getIdentity } from "@/lib/community";
 export default async function TaskPage({
   params,
 }: {
@@ -13,6 +13,7 @@ export default async function TaskPage({
   const t = c.tasks.find((t) => t.id === id);
   if (!t) notFound();
   const p = c.projects.find((p) => p.id === t.project_id);
+  const identity = await getIdentity();
   return (
     <div className="page-content">
       <PageIntro
@@ -73,7 +74,7 @@ export default async function TaskPage({
           )}
         </section>
         {communityReady() ? (
-          <ClaimButton id={t.id} demo={t.is_demo} status={t.status} />
+          <ClaimButton id={t.id} demo={t.is_demo} status={t.status} authenticated={!!identity} />
         ) : (
           <section>
             <h2>Prepare your contribution</h2>
