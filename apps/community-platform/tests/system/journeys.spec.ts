@@ -109,6 +109,35 @@ test("new member creates a private profile through the real action and reopens i
   await capture(page, "private-member-account");
 });
 
+test("unavailable email verification preserves the guest profile draft for recovery", async ({ page }) => {
+  await page.goto("/join");
+  await page.getByLabel("Display name (required)").fill("TEST Guest Draft");
+  await page.getByLabel("Username (required)").fill("test-guest-draft");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Preview profile", exact: true }).click();
+  await page.getByLabel("Email address", { exact: true }).fill("guest@example.invalid");
+  await page.getByRole("button", { name: "Send a verification link", exact: true }).click();
+  await expect(page.getByRole("status").filter({ hasText: "A sign-in email could not be sent." })).toBeVisible();
+  await expect(page.getByText("TEST Guest Draft", { exact: true }).first()).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("TEST Guest Draft", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send a verification link", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Create profile", exact: true })).toHaveCount(0);
+});
+
+test("manual test console selects clearly labelled profiles and returns to guest", async ({ page }) => {
+  await page.goto(`${backend}/__test/console`);
+  await expect(page.getByText("LOCAL TEST ENVIRONMENT — synthetic profiles and data", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Try CFH as a contributor.");
+  await page.getByRole("link", { name: /TEST Alice/ }).click();
+  await expect(page).toHaveURL(/127\.0\.0\.1:3101\/account$/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Welcome, TEST Alice.");
+  await page.goto(`${backend}/__test/console`);
+  await page.getByRole("link", { name: /Browse as a guest/ }).click();
+  await expect(page).toHaveURL("http://127.0.0.1:3101/");
+  await expect(page.locator(".topbar").getByRole("link", { name: /Sign in/ })).toBeVisible();
+});
+
 test("profile duplicate feedback preserves edits, then privacy and publication persist", async ({ page, context, request }) => {
   const member = await signIn(context, request, "alice");
   await page.goto("/account");
@@ -164,8 +193,14 @@ test("conversation publish, independent reply, save, reopen and remove persist",
 test("project membership and task handoff persist through independent review and acceptance", async ({ page, context, request }) => {
   await signIn(context, request, "alice");
   await page.goto("/projects/community-platform?tab=members");
+  await expect(page.getByRole("heading", { name: /Project maintainers/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "TEST Bruno", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Join this project", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "You joined the project." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Joined project", exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Joined project", exact: true })).toBeDisabled();
+  await expect(page.getByRole("heading", { name: /Project contributors/ })).toBeVisible();
+  await capture(page, "real-project-members");
   expect((await rows(request, "alice", "project_members")).length).toBe(1);
   await page.goto(`/work/${task}`);
   await page.getByRole("button", { name: "Claim this task", exact: true }).click();
@@ -184,13 +219,14 @@ test("project membership and task handoff persist through independent review and
   await page.getByRole("button", { name: "Update progress", exact: true }).click();
   await expect(page.getByText(/Your submission is awaiting/)).toBeVisible();
   await page.goto("/reviews");
+  await expect(page.getByRole("heading", { name: "No independent reviews waiting." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Record independent review", exact: true })).toHaveCount(0);
   await signIn(context, request, "bruno");
   await page.goto("/reviews");
   await page.getByLabel("Review evidence and findings").fill("TEST changes requested: add the missing verification evidence to the local deliverable.");
   await page.getByRole("button", { name: "Record independent review", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Record independent review", exact: true })).toHaveCount(0);
-  expect((await rows(request, "bruno", "tasks", `select=status&id=eq.${task}`))[0].status).toBe("IN PROGRESS");
+  await expect.poll(async () => (await rows(request, "bruno", "tasks", `select=status&id=eq.${task}`))[0].status).toBe("IN PROGRESS");
+  await expect(page.getByRole("heading", { name: "No independent reviews waiting." })).toBeVisible();
   await signIn(context, request, "alice");
   await page.goto("/workspace");
   await page.getByLabel("Evidence / pull request URL").fill("https://example.invalid/test-deliverable-v2");
@@ -203,8 +239,8 @@ test("project membership and task handoff persist through independent review and
   await page.getByRole("button", { name: "Record independent review", exact: true }).click();
   await expect(page.getByRole("button", { name: "Accept completed task", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Accept completed task", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Accept completed task", exact: true })).toHaveCount(0);
-  expect((await rows(request, "bruno", "tasks", `select=status&id=eq.${task}`))[0].status).toBe("COMPLETE");
+  await expect.poll(async () => (await rows(request, "bruno", "tasks", `select=status&id=eq.${task}`))[0].status).toBe("COMPLETE");
+  await expect(page.getByRole("heading", { name: "No independent reviews waiting." })).toBeVisible();
   await signIn(context, request, "alice");
   await page.goto("/workspace");
   await expect(page.getByText(/Accepted work. Keep its evidence available/)).toBeVisible();
@@ -215,6 +251,7 @@ test("notifications remain private and marking them read survives reload", async
   await signIn(context, request, "alice");
   await page.goto("/inbox");
   await page.getByRole("button", { name: "Mark all as read", exact: true }).click();
+  await expect.poll(async () => (await rows(request, "alice", "notifications"))[0].read_at).toBeTruthy();
   await expect(page.getByRole("button", { name: "Mark all as read", exact: true })).toHaveCount(0);
   await page.reload();
   expect((await rows(request, "alice", "notifications"))[0].read_at).toBeTruthy();

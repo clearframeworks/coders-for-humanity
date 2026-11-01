@@ -16,6 +16,16 @@ test("real Supabase SDK crosses loopback HTTP into migrated PostgreSQL roles and
     assert.deepEqual(initial.data?.map((row) => row.username).sort(), ["test-alice", "test-bruno"]);
     const privateOwn = await chris.from("profiles").select("*").eq("id", personas.chris.id).single();
     assert.equal(privateOwn.data?.is_public, false);
+    assert.ifError((await chris.from("profiles").update({ is_public: true }).eq("id", personas.chris.id).select("id").single()).error);
+    assert.ifError((await chris.rpc("join_project", { project_input: projectId })).error);
+    assert.ifError((await chris.from("profiles").update({ is_public: false }).eq("id", personas.chris.id).select("id").single()).error);
+    const publicMembers = await anonymous.from("project_members").select("id,role,profiles!inner(name,username)").eq("project_id", projectId);
+    assert.ifError(publicMembers.error);
+    assert.deepEqual(publicMembers.data, [], "A later-private contributor's name remains hidden in the public project directory");
+    const privateViewerDirectory = await chris.from("project_members").select("id,role,profiles!inner(name,username,is_public)").eq("project_id", projectId).eq("profiles.is_public", true);
+    assert.ifError(privateViewerDirectory.error);
+    assert.deepEqual(privateViewerDirectory.data, [], "A private member's own profile is excluded from the public project directory");
+    assert.equal((await chris.from("project_members").select("id").eq("project_id", projectId).eq("user_id", personas.chris.id).maybeSingle()).data !== null, true);
     const denied = await alice.from("profiles").update({ name: "ATTACK" }).eq("id", personas.chris.id).select("id");
     assert.ifError(denied.error);
     assert.deepEqual(denied.data, []);

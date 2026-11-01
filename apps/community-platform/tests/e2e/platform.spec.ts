@@ -61,7 +61,7 @@ test("project room preserves context across its six working views", async ({
     ["Workboard", "Founding work"],
     ["Knowledge", "The project memory"],
     ["Code", "The shared codebase"],
-    ["Members", "A founding team, built on consent."],
+    ["Members", "The people working on this project"],
     ["Overview", "Make the next person’s contribution easier."],
   ]) {
     await tabs.getByRole("link", { name: new RegExp(`^${tab}`) }).click();
