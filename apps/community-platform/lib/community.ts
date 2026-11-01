@@ -15,13 +15,18 @@ export type CommunityPost = {
   } | null;
 };
 export const communityReady = () => configured() && !isDemo();
-export const getViewer = cache(async () => {
+export const getIdentity = cache(async () => {
   if (!communityReady()) return null;
-  const db = await createClient();
-  const {
-    data: { user },
-  } = await db.auth.getUser();
+  try {
+    const db = await createClient();
+    const { data: { user } } = await db.auth.getUser();
+    return user ? { id: user.id } : null;
+  } catch { return null; }
+});
+export const getViewer = cache(async () => {
+  const user = await getIdentity();
   if (!user) return null;
+  const db = await createClient();
   const { data: profile, error } = await db
     .from("profiles")
     .select("id,name,username,is_public")

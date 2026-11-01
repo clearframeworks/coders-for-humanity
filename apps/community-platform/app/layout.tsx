@@ -4,6 +4,8 @@ import { Navigation, Topbar } from "@/components/navigation";
 import "./globals.css";
 import "./hub.css";
 import "./people-first.css";
+import "./interaction.css";
+import { getIdentity } from "@/lib/community";
 export const metadata: Metadata = {
   title: {
     default: "Coders for Humanity — Community workspace",
@@ -12,11 +14,12 @@ export const metadata: Metadata = {
   description:
     "Developers, researchers, designers, and domain experts working together on open technology for meaningful human problems.",
 };
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const viewer = await getIdentity();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -31,9 +34,9 @@ export default function RootLayout({
         <a className="skip-link" href="#main">
           Skip to content
         </a>
-        <Navigation />
+        <Navigation authenticated={!!viewer} />
         <div className="workspace">
-          <Topbar />
+          <Topbar authenticated={!!viewer} />
           <main id="main" tabIndex={-1}>
             {children}
           </main>

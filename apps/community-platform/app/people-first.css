@@ -280,7 +280,7 @@
   color: var(--muted);
 }
 .username-input input {
-  padding-left: 33px !important;
+  padding-left: 2.5em !important;
 }
 .profile-fields .form-help {
   color: var(--muted);

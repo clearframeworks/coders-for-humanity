@@ -9,7 +9,12 @@
     "start": "next start --hostname 127.0.0.1 --port 3100",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "system:backend": "tsx tests/system/fixture-service.ts",
+    "system:app": "tsx tests/system/start-app.ts",
+    "system:verify": "tsx tests/system/verify-runtime.ts",
+    "test:system:backend": "tsx --test tests/system/fixture-service.test.ts",
+    "test:system": "playwright test --config playwright.system.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

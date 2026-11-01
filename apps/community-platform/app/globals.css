@@ -1779,7 +1779,9 @@ textarea {
   margin-top: 8px;
   font-size: 7px;
   letter-spacing: 1.1px;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
 }
 .world-panel svg {
   background: light-dark(#f0f4eb, #1b2b22);

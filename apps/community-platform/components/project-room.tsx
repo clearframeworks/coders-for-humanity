@@ -8,6 +8,7 @@ import { CommunityAction } from "./community-forms";
 import { getPosts, communityReady, getViewer } from "@/lib/community";
 import { getGitHub, repositoryUrl } from "@/lib/github";
 import { EditorialPhoto } from "./editorial-photo";
+import { getProjectPeople, type ProjectPeople } from "@/lib/project-people";
 
 const tabs = [
   "Overview",
@@ -28,10 +29,14 @@ export async function ProjectRoom({
 }) {
   const tab = tabs.find((x) => x.toLowerCase() === requested) || "Overview";
   const work = c.tasks.filter((x) => x.project_id === p.id);
-  const [posts, github, viewer] = await Promise.all([
+  const viewerPromise = getViewer();
+  const [posts, github, viewer, people] = await Promise.all([
     tab === "Conversations" ? getPosts(p.id) : Promise.resolve([]),
     tab === "Code" ? getGitHub() : Promise.resolve(null),
-    getViewer(),
+    viewerPromise,
+    tab === "Members"
+      ? getProjectPeople(p.id, viewerPromise.then((viewer) => viewer?.id))
+      : Promise.resolve(null),
   ]);
   const root = `/projects/${p.slug}`;
   return (
@@ -77,9 +82,9 @@ export async function ProjectRoom({
                 <h3>Our first goal</h3>
                 <p>{p.objective}</p>
                 <div className="notice">
-                  Founding phase. We are recruiting the first human maintainers
-                  and reviewers. No community pilot or impact result has been
-                  completed.
+                  <Link href={`${root}?tab=members`}>Project participants and appointed maintainers</Link>
+                  {" "}are listed in Members. Joining, reviewing work, and approving
+                  a release are separate responsibilities.
                 </div>
               </section>
               <div className="project-context-grid">
@@ -260,8 +265,8 @@ export async function ProjectRoom({
                 ))
               ) : (
                 <p>
-                  No public commits are available yet. The repository exists;
-                  the source upload awaits owner approval.
+                  Recent commits are unavailable here. Open the repository to
+                  view its current activity.
                 </p>
               )}
               <div className="hub-row">
@@ -279,29 +284,41 @@ export async function ProjectRoom({
           )}
           {tab === "Members" && (
             <section className="hub-panel">
-              <h2>A founding team, built on consent.</h2>
-              <p>
-                No human team has been appointed here yet. The first roles to
-                fill are project maintainer, independent harness reviewer,
-                community moderator, and accessibility reviewer.
-              </p>
+              <h2>The people working on this project</h2>
               <p>
                 Joining the project grants contribution access only. Reviewer
                 and release responsibilities are explicitly appointed and can be
                 revoked.
               </p>
+              {people?.status === "ready" ? (
+                <ProjectPeopleList people={people} />
+              ) : people?.status === "unavailable" ? (
+                <div className="notice" role="status">
+                  <p>Project participants could not be loaded. Please try again.</p>
+                  <a href={`${root}?tab=members`}>Reload project participants</a>
+                </div>
+              ) : (
+                <CommunityConnectionNote />
+              )}
               <Link className="button" href="/people">
                 Find collaborators
               </Link>
-              {viewer?.profile && communityReady() ? (
+              {people?.status === "ready" && people.joined ? (
+                <button className="button" disabled>Joined project</button>
+              ) : viewer?.profile?.is_public && people?.status === "ready" ? (
                 <CommunityAction action="join" id={p.id}>
                   Join this project
                 </CommunityAction>
-              ) : (
+              ) : communityReady() && !viewer ? (
                 <p className="form-help">
-                  Project membership opens when verified member accounts are
-                  available.
+                  <Link href={`/login?next=${encodeURIComponent(`${root}?tab=members`)}`}>Sign in</Link> to join this project.
                 </p>
+              ) : communityReady() && !viewer?.profile?.is_public ? (
+                <p className="form-help">
+                  <Link href="/account">Publish your contributor profile</Link> to join this project.
+                </p>
+              ) : (
+                null
               )}
             </section>
           )}
@@ -309,15 +326,13 @@ export async function ProjectRoom({
         <aside className="project-room-aside">
           <section className="hub-panel">
             <span className="eyebrow">PROJECT CONTEXT</span>
-            <h3 style={{ marginTop: 18 }}>Community platform</h3>
+            <h3 style={{ marginTop: 18 }}>{p.name}</h3>
             <p>
-              Stage: founding build
+              Stage: {p.status.toLowerCase().replaceAll("_", " ")}
               <br />
-              License: MIT
+              License: {p.license}
               <br />
-              Maintainer: recruiting
-              <br />
-              Security reviewer: recruiting
+              <Link href={`${root}?tab=members`}>View project maintainers</Link>
             </p>
             <a className="button" href="https://cfh.retehost.com">
               Open live workspace ↗
@@ -351,5 +366,32 @@ export async function ProjectRoom({
         </aside>
       </div>
     </div>
+  );
+}
+
+function ProjectPeopleList({ people }: { people: ProjectPeople }) {
+  return (
+    <>
+      {([
+        ["Project maintainers", people.maintainers, "No public maintainer profiles are listed for this project yet."],
+        ["Project contributors", people.members, "No public contributor profiles are listed for this project yet."],
+      ] as const).map(([heading, participants, empty]) => (
+        <section key={heading}>
+          <h3>{heading}</h3>
+          <p className="form-help">{participants.length} public {heading === "Project maintainers" ? "maintainer" : "contributor"}{participants.length === 1 ? "" : "s"}</p>
+          {participants.length ? (
+            <ul>
+              {participants.map((person) => (
+                <li key={person.id}>
+                  <Link href={`/people/${person.profiles.username}`}>{person.profiles.name}</Link>
+                  {" · "}{person.role}
+                </li>
+              ))}
+            </ul>
+          ) : <p>{empty}</p>}
+        </section>
+      ))}
+      <p className="form-help">Private profiles are not listed. Project membership does not grant deployment authority.</p>
+    </>
   );
 }
