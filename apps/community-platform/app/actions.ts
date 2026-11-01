@@ -2,7 +2,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient, configured, isDemo } from "@/lib/supabase";
+import { createClient, configured, isDemo, githubAuthEnabled } from "@/lib/supabase";
 import { proposalSchema, profileSchema } from "@/lib/validation";
 import { safeNext } from "@/lib/filters";
 export type ActionState = { error?: string; message?: string; id?: string };
@@ -104,9 +104,12 @@ export async function saveProfile(payload: unknown): Promise<ActionState> {
       .eq("id", user.id)
       .maybeSingle();
     if (existing.error) return { error: "Your profile could not be loaded." };
-    const { error } = existing.data
-      ? await db.from("profiles").update(values).eq("id", user.id)
-      : await db.from("profiles").insert({ id: user.id, ...values });
+    const mutation = existing.data
+      ? db.from("profiles").update(values).eq("id", user.id)
+      : db.from("profiles").insert({ id: user.id, ...values });
+    const { data: saved, error } = await mutation
+      .select("id,username,is_public")
+      .single();
     if (error)
       return {
         error:
@@ -114,6 +117,8 @@ export async function saveProfile(payload: unknown): Promise<ActionState> {
             ? "That username is already in use."
             : "Your profile could not be saved. Please check the fields.",
       };
+    if (!saved || saved.id !== user.id || saved.username !== data.username || saved.is_public !== data.is_public)
+      return { error: "Your profile save could not be confirmed. Reload your account before trying again." };
     revalidatePath("/account");
     revalidatePath(`/people/${data.username}`);
     revalidatePath("/people");
@@ -138,6 +143,8 @@ export async function signIn(
     const next = safeNext(String(form.get("next") || ""));
     const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`;
     if (form.get("provider") === "github") {
+      if (!githubAuthEnabled())
+        return { error: "GitHub sign-in is unavailable. Use your email to continue." };
       const { data, error } = await db.auth.signInWithOAuth({
         provider: "github",
         options: { redirectTo: callback, scopes: "read:user" },
@@ -158,8 +165,11 @@ export async function signIn(
       });
       if (error)
         return {
-          error:
-            "A sign-in email could not be sent. Please wait a moment and try again.",
+          error: error.code === "otp_disabled"
+            ? "This email could not sign in. If you are new here, choose Create your profile to register."
+            : error.code === "over_email_send_rate_limit"
+              ? "Too many email requests. Wait a few minutes before requesting another link."
+              : "A sign-in email could not be sent. Please wait a moment and try again.",
         };
       return {
         message:

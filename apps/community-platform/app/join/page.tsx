@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ProfileOnboarding } from "@/components/profile-onboarding";
 import { communityReady, getViewer } from "@/lib/community";
+import { githubAuthEnabled } from "@/lib/supabase";
 
 export const metadata = { title: "Create your profile" };
 export default async function Join() {
@@ -32,6 +33,7 @@ export default async function Join() {
       <ProfileOnboarding
         connected={communityReady()}
         authenticated={!!viewer}
+        githubEnabled={githubAuthEnabled()}
       />
     </div>
   );

@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 export const isDemo = () => process.env.CFH_DEMO_MODE === "true";
+export const githubAuthEnabled = () =>
+  process.env.CFH_GITHUB_AUTH_ENABLED === "true";
 export const configured = () =>
   Boolean(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
