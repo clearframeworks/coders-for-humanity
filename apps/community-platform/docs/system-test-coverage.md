@@ -10,8 +10,10 @@ This environment tests the actual application with synthetic identities and a lo
 | Conversations | Publish, independent reply, save, reopen workspace, remove saved item | Actual posts/replies/saved rows and other-person saved-item privacy |
 | Shared work | Join project, claim, start, block/resume, submit evidence, exclude self-review, request changes, resubmit, independent approval and acceptance | Membership, assignment, work status, evidence, review version and completion in PostgreSQL |
 | Notifications | Mark read, reload | Saved read timestamp; other-person notification privacy |
+| Personal handoff | Commitments appear before optional notebook; keyboard expand/collapse; draft survives reload | Browser-local recovery state is separate from shared task state |
 | Proposals | Save/reload draft, complete substantive sections, submit, reopen | Atomic proposal/evidence creation and author-only access |
-| Failure and recovery | Injected profile-save failure retains edits and retries; profile read failure leaves public handbook/header available; member-page retry | One-shot HTTP failure, then actual successful database operation |
+| Failure and recovery | Injected profile-save failure retains edits and retries; public handbook/header remains available; transient profile reads recover through the installed SDK's retry behavior | One-shot HTTP failure, actual successful database operation and sanitized 503→200 read transcript |
+| Persistent query error | Member-page error boundary, visible retry, public header and account reload recovery | Nonretryable test query error, then normal database read |
 | Private contributor and sign-out | Participation guidance, account accessibility scan, sign-out, protected-page redirect | Private profile remains private; test cookie removed |
 
 The system suite runs these journeys at 390px touch/mobile and 1440px desktop. It complements the production-build public browser suite (including search/filter, theme, local draft recovery, documents/downloads, public route and automated accessibility checks), the unit suite and the database tests. The database tests independently exercise wrong-user edits, authority escalation, competing claims, hidden threads, rate limits, self-review and stale-version rejection.

@@ -84,6 +84,19 @@ test("real Supabase SDK crosses loopback HTTP into migrated PostgreSQL roles and
     const transcript = await (await fetch("http://127.0.0.1:54339/__test/requests")).json();
     assert.ok(transcript.some((entry: { status: number }) => entry.status === 503));
     assert.ok(transcript.every((entry: object) => Object.keys(entry).sort().join(",") === "actor,method,path,status"));
+    for (const status of [400, 403, 503]) {
+      const arm = await fetch("http://127.0.0.1:54339/__test/fail-next", { method: "POST", body: JSON.stringify({ path: "/rest/v1/profiles", method: "GET", status }) });
+      assert.equal(arm.status, 200);
+      const failed = await fetch("http://127.0.0.1:54339/rest/v1/profiles?select=id", { headers: { "accept-profile": "cfh" } });
+      assert.equal(failed.status, status);
+      if (status === 400) assert.equal((await failed.json()).code, "TEST_QUERY_ERROR");
+      assert.equal((await fetch("http://127.0.0.1:54339/rest/v1/profiles?select=id", { headers: { "accept-profile": "cfh" } })).status, 200);
+    }
+    for (const status of [200, 401, 404, 500, "400"]) {
+      const rejected = await fetch("http://127.0.0.1:54339/__test/fail-next", { method: "POST", body: JSON.stringify({ path: "/rest/v1/profiles", method: "GET", status }) });
+      assert.equal(rejected.status, 400);
+      assert.equal((await fetch("http://127.0.0.1:54339/rest/v1/profiles?select=id", { headers: { "accept-profile": "cfh" } })).status, 200);
+    }
     const consolePage = await fetch("http://127.0.0.1:54339/__test/console");
     assert.match(await consolePage.text(), /LOCAL TEST ENVIRONMENT/);
     const login = await fetch("http://127.0.0.1:54339/__test/login?persona=alice", { redirect: "manual" });

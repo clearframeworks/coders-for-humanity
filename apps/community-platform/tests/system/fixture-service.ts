@@ -67,7 +67,7 @@ export async function createFixtureService(port = 54329) {
   let constraintNames = new Set<string>();
   let sequence = Promise.resolve();
   const transcript: { method: string; path: string; actor: string; status: number }[] = [];
-  let failNext: { path: string; method: string } | undefined;
+  let failNext: { path: string; method: string; status: 400 | 403 | 503 } | undefined;
   const serial = <T>(operation: () => Promise<T>): Promise<T> => {
     const next = sequence.then(operation);
     sequence = next.then(() => {}, () => {});
@@ -249,7 +249,9 @@ export async function createFixtureService(port = 54329) {
         if (url.pathname === "/__test/requests") return send(response, 200, transcript);
         if (url.pathname === "/__test/fail-next" && request.method === "POST") {
           if (typeof body.path !== "string" || !body.path.startsWith("/rest/v1/") || !["GET", "POST", "PATCH", "HEAD"].includes(body.method)) return send(response, 400, { message: "Provide an exact /rest/v1/ path and supported method" });
-          failNext = { path: body.path, method: body.method };
+          const status = body.status ?? 503;
+          if (![400, 403, 503].includes(status)) return send(response, 400, { message: "Fixture failure status must be 400, 403, or 503" });
+          failNext = { path: body.path, method: body.method, status };
           return send(response, 200, { armed: failNext });
         }
         if (url.pathname === "/__test/personas") return send(response, 200, Object.fromEntries((Object.keys(personas) as Persona[]).map((name) => [name, { ...personas[name], session: fixtureSession(name), cookie: fixtureCookie(name) }])));
@@ -260,8 +262,9 @@ export async function createFixtureService(port = 54329) {
           transcript.push(entry);
           response.once("finish", () => { entry.status = response.statusCode; });
           if (failNext?.path === url.pathname && failNext.method === request.method) {
+            const status = failNext.status;
             failNext = undefined;
-            return send(response, 503, { code: "TEST_INJECTED_FAILURE", message: "Synthetic local database connection interrupted", details: null, hint: null });
+            return send(response, status, { code: status === 400 ? "TEST_QUERY_ERROR" : status === 403 ? "TEST_PERMISSION_DENIED" : "TEST_INJECTED_FAILURE", message: status === 503 ? "Synthetic local database connection interrupted" : status === 403 ? "Synthetic local permission denial" : "Synthetic local query failure", details: null, hint: null });
           }
         }
         if (url.pathname === "/auth/v1/user") return persona ? send(response, 200, fixtureSession(persona).user) : send(response, 401, { code: "bad_jwt", message: "Local test identity required" });

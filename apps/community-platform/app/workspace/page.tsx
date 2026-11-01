@@ -143,7 +143,6 @@ export default async function Workspace({
           Review queue
         </Link>
       </div>
-      <WorkspaceNotebook initialTaskId={initialTaskId} />
       <section className="hub-stack">
         <h2>My commitments</h2>
         {tasks.length ? (
@@ -234,6 +233,11 @@ export default async function Workspace({
           </div>
         )}
       </section>
+      <details className="hub-panel" open={!!initialTaskId}>
+        <summary>Prepare or resume a handoff</summary>
+        <p className="form-help">Keep your working notes here. Drafts stay on this device until you save or export them.</p>
+        <WorkspaceNotebook initialTaskId={initialTaskId} />
+      </details>
     </div>
   );
 }

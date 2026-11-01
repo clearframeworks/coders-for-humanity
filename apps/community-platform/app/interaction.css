@@ -2,6 +2,7 @@
 .navigation-heading, .navigation-backdrop { display: none; }
 main { scroll-margin-top: 76px; }
 .field input, .field textarea, .field select { scroll-margin-block: 90px; }
+.hub-panel > summary { cursor: pointer; font-weight: 600; min-height: 44px; padding-block: 8px; }
 @media (max-width: 640px) {
   .mobile-bar { height: 60px; }
   .mobile-bar button, .navigation-close { min-width: 44px; min-height: 44px; }

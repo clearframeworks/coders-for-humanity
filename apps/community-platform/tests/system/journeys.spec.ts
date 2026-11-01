@@ -25,6 +25,8 @@ async function rows(request: APIRequestContext, actor: Actor | null, table: stri
 }
 async function capture(page: Page, name: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: test.info().outputPath(`${name}.png`), fullPage: true });
 }
 
@@ -275,7 +277,13 @@ test("profile service failure keeps edits and retry recovers without breaking pu
   await expect(page.getByText("Something went wrong", { exact: true })).toHaveCount(0);
   await expect(page.locator(".topbar").getByRole("link", { name: "My account", exact: true })).toBeVisible();
   await page.goto("/account");
-  await expect(page.getByRole("heading", { name: "We couldn’t load this record." })).toBeVisible();
+  // The installed SDK retries idempotent reads after a transient 503. Verify
+  // recovery from the actual HTTP transcript rather than expecting an error UI.
+  await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("TEST Alice Recovered");
+  const transcript = await (await request.get(`${backend}/__test/requests`)).json();
+  const failure = transcript.findIndex((entry: any) => entry.method === "GET" && entry.path === "/rest/v1/profiles" && entry.status === 503);
+  expect(failure).toBeGreaterThanOrEqual(0);
+  expect(transcript.slice(failure + 1).some((entry: any) => entry.method === "GET" && entry.path === "/rest/v1/profiles" && entry.status === 200)).toBeTruthy();
   await page.reload();
   await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("TEST Alice Recovered");
 });
@@ -303,6 +311,43 @@ test("proposal saves a draft, submits substantive evidence and stays author-priv
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(saved[0].title);
   await page.reload();
   await capture(page, "submitted-private-proposal");
+});
+
+test("persistent query failure renders a real retry state and reload restores the account", async ({ page, context, request }) => {
+  await signIn(context, request, "alice");
+  // A nonretryable database/query error exercises the boundary separately from
+  // the SDK's legitimate transient-read retry behavior.
+  await request.post(`${backend}/__test/fail-next`, { data: { path: "/rest/v1/profiles", method: "GET", status: 400 } });
+  await page.goto("/account");
+  await expect(page.getByRole("heading", { name: "We couldn’t load this record." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again", exact: true })).toBeVisible();
+  await expect(page.locator(".topbar").getByRole("link", { name: "My account", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Try again", exact: true }).click();
+  await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("TEST Alice");
+  await page.reload();
+  await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("TEST Alice");
+});
+
+test("signed-in workspace puts commitments first and optional handoff drafts remain recoverable", async ({ page, context, request }) => {
+  await signIn(context, request, "alice");
+  await page.goto("/workspace");
+  const summary = page.getByText("Prepare or resume a handoff", { exact: true });
+  const details = page.locator("details").filter({ has: summary });
+  await expect(details).not.toHaveAttribute("open");
+  await expect(page.getByLabel("Handoff title", { exact: true })).not.toBeVisible();
+  await expect(page.getByRole("heading", { name: "My commitments", exact: true })).toBeVisible();
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(details).toHaveAttribute("open", "");
+  await page.getByLabel("Handoff title", { exact: true }).fill("TEST recoverable signed-in handoff");
+  await page.getByLabel("Context and objective", { exact: true }).fill("TEST optional working notes remain available without hiding actual commitments.");
+  await expect(page.getByRole("status").filter({ hasText: "Unfinished changes are being recovered on this device." })).toBeVisible();
+  await page.reload();
+  await summary.click();
+  await expect(page.getByLabel("Handoff title", { exact: true })).toHaveValue("TEST recoverable signed-in handoff");
+  await summary.click();
+  await expect(page.getByLabel("Handoff title", { exact: true })).not.toBeVisible();
+  await capture(page, "commitments-first-workspace");
 });
 
 test("private member sees clear participation recovery; account remains accessible by keyboard", async ({ page, context, request }) => {
