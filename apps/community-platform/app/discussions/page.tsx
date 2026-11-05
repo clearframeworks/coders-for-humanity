@@ -31,6 +31,13 @@ export default async function Discussions({
           Project spaces
         </Link>
       </div>
+      <p>
+        Looking for a place to connect beyond project discussions?{" "}
+        <a className="text-link" href="https://tinyvibespace.com/">
+          Visit TinyVibespace ↗
+        </a>
+        . It is an independent community with its own account.
+      </p>
       {!communityReady() && <CommunityConnectionNote />}
       <form className="hub-panel hub-row" role="search">
         <div className="field">

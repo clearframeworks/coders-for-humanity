@@ -255,6 +255,17 @@ export default async function Home({
         </div>
         <aside className="hub-rail" aria-label="Community context">
           <section className="rail-section">
+            <h2>Connect on TinyVibespace</h2>
+            <p>
+              Build together here, then visit TinyVibespace to connect, talk, and
+              share what you create. TinyVibespace is independent and uses its
+              own account.
+            </p>
+            <a className="text-link" href="https://tinyvibespace.com/">
+              Visit TinyVibespace <ArrowUpRight size={15} />
+            </a>
+          </section>
+          <section className="rail-section">
             <div className="hub-section-head">
               <h2>Your starting point</h2>
               <Sparkles size={17} />
