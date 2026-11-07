@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CFH Share">
+  <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+  <path d="M26 44h28v40H26zM74 44h28v40H74z" fill="#fff"/>
+  <path d="M37 76h6m42 0h6" stroke="#078777" stroke-width="5" stroke-linecap="round"/>
+  <path d="M48 62h31m-9-9 10 9-10 9" fill="none" stroke="#57d3bb" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

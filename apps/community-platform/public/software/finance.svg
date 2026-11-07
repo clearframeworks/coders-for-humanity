@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Your finances">
+ <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+ <path d="M28 32h72v64H28z" fill="#fff"/>
+ <path d="M40 48h22M40 63h22M40 78h22" stroke="#073c66" stroke-width="6" stroke-linecap="round"/>
+ <path d="M75 48h12M75 63h12M75 78h12" stroke="#078777" stroke-width="6" stroke-linecap="round"/>
+ <path d="M69 40v47" stroke="#a9d9d2" stroke-width="3"/>
+</svg>

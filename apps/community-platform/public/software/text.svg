@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CFH Text">
+  <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+  <path d="M36 31h45l11 11v55H36z" fill="#fff"/>
+  <path d="M81 31v12h11" fill="#9dded2"/>
+  <path d="M48 56h32M48 68h24M48 80h18" fill="none" stroke="#073c66" stroke-width="6" stroke-linecap="round"/>
+  <path d="M82 71v18m-5-18h10m-10 18h10" fill="none" stroke="#078777" stroke-width="5" stroke-linecap="round"/>
+</svg>

@@ -20,3 +20,22 @@
   .software-heading { margin-top: 26px; }
   .software-start { padding: 22px; }
 }
+.software-category { border-top: 1px solid var(--line); padding-top: 20px; }
+.software-category > .eyebrow { margin-bottom: 0; }
+.software-category .software-listing { border: 0; padding-top: 12px; }
+.software-product-listing > div { flex: 1; }
+.software-mark { display: block; flex: none; border-radius: 16px; }
+.product-identity { display: flex; align-items: center; gap: 24px; margin-bottom: 22px; }
+.product-identity h1 { margin: 0; }
+.product-identity .eyebrow { margin-bottom: 10px; }
+.software-start ul { padding-left: 20px; line-height: 1.7; }
+.software-start li + li { margin-top: 8px; }
+@media (max-width: 800px) {
+  .software-product-listing { display: grid; grid-template-columns: 64px 1fr; column-gap: 16px; }
+  .software-product-listing .software-mark { width: 64px; height: 64px; }
+  .software-product-listing > .button { grid-column: 2; justify-self: start; }
+}
+@media (max-width: 400px) {
+  .product-identity { align-items: flex-start; gap: 16px; }
+  .product-identity .software-mark { width: 64px; height: 64px; }
+}

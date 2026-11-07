@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 
 test("free software has a dedicated page and a complete download", async ({ page, request }, testInfo) => {
   await page.goto("/software");
-  await page.getByRole("link", { name: "Get Your finances" }).click();
+  await page.getByRole("link", { name: "Explore Your finances" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Know what your money needs to cover.");
   await page.screenshot({ path: testInfo.outputPath("finance-desktop.png"), fullPage: true });
   await expect(page.getByRole("link", { name: "Browse the full source" })).toHaveAttribute("href", /github.com\/clearframeworks\/coders-for-humanity\/tree\/main\/products\/finance-workspace/);
