@@ -51,6 +51,15 @@ export default function Software() {
         </div>
         <a className="button primary" href="https://github.com/clearframeworks/cfh-search/releases/tag/cfh-search-0.1.0">Get CFH Search →</a>
       </article>
+      <article className="software-listing">
+        <div>
+          <p className="eyebrow">LOCAL PNG OPTIMIZER · MIT LICENSE</p>
+          <h2>CFH PNG</h2>
+          <p>Create an optimized copy of a PNG on your Windows computer using oxipng. Copies may not be smaller, and some metadata may be removed. Input and decompressed images are limited to 256 MB.</p>
+          <p className="software-detail">Unsigned installer · A PowerShell window remains open while the app runs</p>
+        </div>
+        <a className="button primary" href="https://github.com/clearframeworks/cfh-png/releases/tag/cfh-png-0.1.0">Get CFH PNG →</a>
+      </article>
     </div>
   );
 }
