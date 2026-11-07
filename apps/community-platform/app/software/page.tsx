@@ -42,6 +42,15 @@ export default function Software() {
         </div>
         <a className="button primary" href="https://github.com/clearframeworks/cfh-localsend/releases/tag/cfh-share-0.1.0-rc1">View experimental release →</a>
       </article>
+      <article className="software-listing">
+        <div>
+          <p className="eyebrow">LOCAL FILE SEARCH · MIT OR UNLICENSE</p>
+          <h2>CFH Search</h2>
+          <p>Find literal text in files within a folder on your Windows computer. Based on ripgrep; hidden, ignored and binary files are excluded by default, and results are limited to one million characters.</p>
+          <p className="software-detail">Unsigned installer · A PowerShell window remains open while the app runs</p>
+        </div>
+        <a className="button primary" href="https://github.com/clearframeworks/cfh-search/releases/tag/cfh-search-0.1.0">Get CFH Search →</a>
+      </article>
     </div>
   );
 }
