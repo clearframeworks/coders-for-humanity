@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CFH Search">
+  <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+  <path d="M30 34h48v14H30zm0 23h32v8H30zm0 17h28v8H30z" fill="#fff"/>
+  <circle cx="77" cy="72" r="18" fill="#073c66" stroke="#57d3bb" stroke-width="7"/>
+  <path d="m90 85 13 13" stroke="#57d3bb" stroke-width="8" stroke-linecap="round"/>
+  <path d="M69 72h16" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+</svg>
