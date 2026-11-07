@@ -31,7 +31,7 @@ export default function Software() {
             <p>Edit text in your terminal with CFH Text, a free fork of the Micro editor. The source code and license are included with the release.</p>
             <p className="software-detail">Windows · Unsigned installer · Based on Micro</p>
           </div>
-          <a className="button primary" href="https://github.com/clearframeworks/cfh-micro/releases/tag/cfh-text-0.1.0">Get CFH Text →</a>
+          <a className="button primary" href="https://github.com/clearframeworks/cfh-micro/releases/tag/cfh-text-0.1.1">Get CFH Text →</a>
       </article>
       <article className="software-listing">
         <div>
