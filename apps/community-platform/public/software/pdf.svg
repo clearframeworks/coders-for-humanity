@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CFH PDF">
+ <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+ <path d="M27 29h39l10 10v49H27z" fill="#ffffff"/>
+ <path d="M66 29v11h10" fill="#b4e4dc"/>
+ <path d="M37 50h24M37 60h24M37 70h17" stroke="#073c66" stroke-width="5" stroke-linecap="round"/>
+ <path d="M65 54h25l10 10v35H65z" fill="#57d3bb"/>
+ <path d="M90 54v11h10" fill="#c9f0e8"/>
+ <path d="M73 75h18M73 84h18" stroke="#073c66" stroke-width="5" stroke-linecap="round"/>
+</svg>

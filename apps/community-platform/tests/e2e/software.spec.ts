@@ -27,3 +27,11 @@ test("mobile software page has no horizontal overflow", async ({ page }, testInf
   await page.getByRole("button", { name: "Open navigation" }).click();
   await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Free software" })).toBeVisible();
 });
+
+test("PDF listing leads to the released page assembler", async ({ page }) => {
+  await page.goto("/software");
+  await page.getByRole("link", { name: "Explore CFH PDF" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("CFH PDF");
+  await expect(page.getByRole("link", { name: /View 64-bit Windows release/ })).toHaveAttribute("href", "https://github.com/clearframeworks/cfh-pdf/releases/tag/cfh-pdf-0.1.0");
+  await expect(page.getByText(/digital signatures will not remain valid/)).toBeVisible();
+});
