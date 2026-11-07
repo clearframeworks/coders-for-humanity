@@ -33,6 +33,15 @@ export default function Software() {
           </div>
           <a className="button primary" href="https://github.com/clearframeworks/cfh-micro/releases/tag/cfh-text-0.1.0">Get CFH Text →</a>
       </article>
+      <article className="software-listing">
+        <div>
+          <p className="eyebrow">EXPERIMENTAL LOCAL FILE SHARING · APACHE 2.0 LICENSE</p>
+          <h2>CFH Share</h2>
+          <p>An experimental Windows fork of LocalSend for sharing files on a local network. The sending interface and transfers between separate devices have not been verified.</p>
+          <p className="software-detail">Unsigned installer · Windows Share menu and startup integration unavailable</p>
+        </div>
+        <a className="button primary" href="https://github.com/clearframeworks/cfh-localsend/releases/tag/cfh-share-0.1.0-rc1">View experimental release →</a>
+      </article>
     </div>
   );
 }
