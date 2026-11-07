@@ -24,6 +24,15 @@ export default function Software() {
         </div>
         <Link className="button primary" href="/software/finance-workspace">Get Your finances →</Link>
       </article>
+      <article className="software-listing">
+          <div>
+            <p className="eyebrow">TERMINAL TEXT EDITOR · MIT LICENSE</p>
+            <h2>CFH Text</h2>
+            <p>Edit text in your terminal with CFH Text, a free fork of the Micro editor. The source code and license are included with the release.</p>
+            <p className="software-detail">Windows · Unsigned installer · Based on Micro</p>
+          </div>
+          <a className="button primary" href="https://github.com/clearframeworks/cfh-micro/releases/tag/cfh-text-0.1.0">Get CFH Text →</a>
+      </article>
     </div>
   );
 }
