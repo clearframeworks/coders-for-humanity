@@ -29,9 +29,9 @@ export default function Software() {
             <p className="eyebrow">TERMINAL TEXT EDITOR · MIT LICENSE</p>
             <h2>CFH Text</h2>
             <p>Edit text in your terminal with CFH Text, a free fork of the Micro editor. The source code and license are included with the release.</p>
-            <p className="software-detail">Windows · Unsigned installer · Based on Micro</p>
+            <p>The catalog download link is temporarily unavailable while we review security advisories affecting dependencies in the current Windows release.</p>
+            <p className="software-detail">Windows · Based on Micro</p>
           </div>
-          <a className="button primary" href="https://github.com/clearframeworks/cfh-micro/releases/tag/cfh-text-0.1.0">Get CFH Text →</a>
       </article>
       <article className="software-listing">
         <div>
