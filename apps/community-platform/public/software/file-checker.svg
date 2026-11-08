@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="CFH File Checker">
+ <rect x="3" y="3" width="122" height="122" rx="31" fill="#073c66"/>
+ <path d="M24 34h38l10 10v48H24z" fill="#fff"/>
+ <path d="M62 34v11h10" fill="#b4e4dc"/>
+ <path d="M34 55h25M34 66h25M34 77h16" stroke="#073c66" stroke-width="5" stroke-linecap="round"/>
+ <path d="M78 53h25v36H78z" fill="#57d3bb"/>
+ <path d="M84 62h13M84 70h13M84 78h8" stroke="#073c66" stroke-width="4" stroke-linecap="round"/>
+ <path d="M66 59h13m-5-5 5 5-5 5" fill="none" stroke="#078777" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
