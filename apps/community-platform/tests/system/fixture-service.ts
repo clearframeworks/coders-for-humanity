@@ -67,6 +67,7 @@ export async function createFixtureService(port = 54329) {
   let constraintNames = new Set<string>();
   let sequence = Promise.resolve();
   const transcript: { method: string; path: string; actor: string; status: number }[] = [];
+  let testLink: { code: string; challenge: string } | undefined;
   let failNext: { path: string; method: string; status: 400 | 403 | 503 } | undefined;
   const serial = <T>(operation: () => Promise<T>): Promise<T> => {
     const next = sequence.then(operation);
@@ -100,6 +101,7 @@ export async function createFixtureService(port = 54329) {
     }
     constraintNames = new Set((await db.query<{ conname: string }>("select conname from pg_constraint where contype='f'")).rows.map((row) => row.conname));
     transcript.length = 0;
+    testLink = undefined;
     failNext = undefined;
   }
   await reset();
@@ -247,6 +249,8 @@ export async function createFixtureService(port = 54329) {
         if (url.pathname === "/__test/health") return send(response, 200, { status: "ready", runId, migrationFingerprint, boundary: "loopback synthetic auth; real PGlite migrations/RLS" });
         if (url.pathname === "/__test/reset" && request.method === "POST") { await reset(); return send(response, 200, { reset: true }); }
         if (url.pathname === "/__test/requests") return send(response, 200, transcript);
+        if (url.pathname === "/__test/sign-in-code" && request.method === "GET")
+          return testLink ? send(response, 200, { code: testLink.code }) : send(response, 404, { message: "No local sign-in code requested" });
         if (url.pathname === "/__test/fail-next" && request.method === "POST") {
           if (typeof body.path !== "string" || !body.path.startsWith("/rest/v1/") || !["GET", "POST", "PATCH", "HEAD"].includes(body.method)) return send(response, 400, { message: "Provide an exact /rest/v1/ path and supported method" });
           const status = body.status ?? 503;
@@ -269,6 +273,21 @@ export async function createFixtureService(port = 54329) {
         }
         if (url.pathname === "/auth/v1/user") return persona ? send(response, 200, fixtureSession(persona).user) : send(response, 401, { code: "bad_jwt", message: "Local test identity required" });
         if (url.pathname === "/auth/v1/logout") return send(response, 204, null);
+        if (url.pathname === "/auth/v1/otp" && request.method === "POST" && body.email === personas.alice.email) {
+          if (body.code_challenge_method !== "s256" || typeof body.code_challenge !== "string")
+            return send(response, 400, { message: "The fixture requires PKCE" });
+          testLink = { code: randomUUID(), challenge: body.code_challenge };
+          return send(response, 200, {});
+        }
+        if (url.pathname === "/auth/v1/token" && url.searchParams.get("grant_type") === "pkce" && request.method === "POST") {
+          const challenge = typeof body.code_verifier === "string"
+            ? createHash("sha256").update(body.code_verifier).digest("base64url")
+            : null;
+          if (!testLink || body.auth_code !== testLink.code || challenge !== testLink.challenge)
+            return send(response, 400, { message: "Invalid local sign-in code or verifier" });
+          testLink = undefined;
+          return send(response, 200, fixtureSession("alice"));
+        }
         if (url.pathname === "/auth/v1/token" && url.searchParams.get("grant_type") === "refresh_token") {
           const name = String(body.refresh_token).replace("fixture-refresh-", "") as Persona;
           return name in personas ? send(response, 200, fixtureSession(name)) : send(response, 401, { message: "Unknown fixture session" });

@@ -131,6 +131,56 @@ test("unavailable email verification preserves the guest profile draft for recov
   await expect(page.getByRole("button", { name: "Create profile", exact: true })).toHaveCount(0);
 });
 
+for (const remember of [false, true]) {
+  test(`email link sign-in keeps ${remember ? "remembered" : "session-only"} cookies through refresh`, async ({ page, context, request, browser }) => {
+    await page.goto("/login?next=/account");
+    const toggle = page.getByRole("checkbox", { name: "Remember me on this device" });
+    await expect(toggle).not.toBeChecked();
+    if (remember) await toggle.check();
+    await page.getByLabel("Email address", { exact: true }).fill("alice@example.invalid");
+    await page.getByRole("button", { name: "Send a sign-in link", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Check your email" })).toBeVisible();
+    const code = await request.get(`${backend}/__test/sign-in-code`);
+    expect(code.ok()).toBeTruthy();
+    await page.goto(`/auth/callback?next=/account&code=${(await code.json()).code}`);
+    await expect(page).toHaveURL(/\/account$/);
+    await expect(page.getByRole("heading", { name: "Welcome, TEST Alice." })).toBeVisible();
+    const auth = async () => (await context.cookies()).find(cookie => cookie.name === "cfh-auth");
+    const before = await auth();
+    expect(before).toBeDefined();
+    expect(before!.expires > 0).toBe(remember);
+    const session = JSON.parse(Buffer.from(before!.value.replace(/^base64-/, ""), "base64url").toString("utf8"));
+    session.expires_at = 1;
+    await context.addCookies([{ ...before!, value: `base64-${Buffer.from(JSON.stringify(session)).toString("base64url")}` }]);
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Welcome, TEST Alice." })).toBeVisible();
+    const refreshed = await auth();
+    expect(refreshed).toBeDefined();
+    const refreshedSession = JSON.parse(Buffer.from(refreshed!.value.replace(/^base64-/, ""), "base64url").toString("utf8"));
+    expect(refreshedSession.expires_at).toBeGreaterThan(1);
+    expect(refreshed!.expires > 0).toBe(remember);
+    const state = await context.storageState();
+    // Simulate a new browser session retaining only cookies with a lifetime.
+    const reopened = await browser.newContext({
+      storageState: { ...state, cookies: state.cookies.filter(cookie => cookie.expires > 0) },
+    });
+    try {
+      await reopened.route("**/*", route => new URL(route.request().url()).hostname === "127.0.0.1" ? route.continue() : route.abort("blockedbyclient"));
+      const fresh = await reopened.newPage();
+      await fresh.goto("http://127.0.0.1:3101/account");
+      if (remember) await expect(fresh.getByRole("heading", { name: "Welcome, TEST Alice." })).toBeVisible();
+      else await expect(fresh).toHaveURL(/\/login\?next=/);
+    } finally {
+      await reopened.close();
+    }
+    await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await expect(page).toHaveURL("http://127.0.0.1:3101/");
+    await page.goto("/account");
+    await expect(page).toHaveURL(/\/login\?next=/);
+    expect((await context.cookies()).filter(cookie => cookie.name.startsWith("cfh-auth") || cookie.name === "cfh-session-only" || cookie.name === "cfh-pending-remember")).toEqual([]);
+  });
+}
+
 test("manual test console selects clearly labelled profiles and returns to guest", async ({ page }) => {
   await page.goto(`${backend}/__test/console`);
   await expect(page.getByText("LOCAL TEST ENVIRONMENT — synthetic profiles and data", { exact: true })).toBeVisible();
