@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signIn } from "@/app/actions";
 export function LoginForm({
   next,
@@ -13,6 +13,7 @@ export function LoginForm({
   githubEnabled?: boolean;
 }) {
   const [state, action, pending] = useActionState(signIn, {});
+  const [remember, setRemember] = useState(false);
   return (
     <form action={action} className="auth-card">
       <input type="hidden" name="next" value={next} />
@@ -40,6 +41,20 @@ export function LoginForm({
           maxLength={254}
         />
       </div>
+      <label className="checkbox-label">
+        <input
+          type="checkbox"
+          name="remember"
+          checked={remember}
+          onChange={(event) => setRemember(event.target.checked)}
+          disabled={disabled}
+          aria-describedby="remember-help"
+        />
+        Remember me on this device
+      </label>
+      <p className="form-help" id="remember-help">
+        Leave this unchecked if you share this device.
+      </p>
       <button
         className="button"
         name="provider"
@@ -58,8 +73,8 @@ export function LoginForm({
         </div>
       )}
       <p className="form-help">
-        No password to remember. Your email address is never included in your
-        public profile.
+        Start here with your email, then open the link in the same browser to
+        finish signing in. Your email address stays off your public profile.
       </p>
     </form>
   );

@@ -7,6 +7,8 @@ import { Script } from "node:vm";
 import ts from "typescript";
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
+import * as authCookies from "../lib/auth-cookies";
+import { callbackFailurePath, safeNext } from "../lib/filters";
 
 function load(file: string, dependencies: Record<string, unknown>) {
   const exports: Record<string, any> = {};
@@ -15,8 +17,10 @@ function load(file: string, dependencies: Record<string, unknown>) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   new Script(code, { filename: file }).runInNewContext({
-    exports, process, Error,
-    require: (name: string) => dependencies[name] ?? requireModule(name),
+    exports, process, Error, URL,
+    require: (name: string) => dependencies[name] ?? (
+      name === "./auth-cookies" || name === "@/lib/auth-cookies" ? authCookies : requireModule(name)
+    ),
   });
   return exports;
 }
@@ -44,7 +48,7 @@ test("server and proxy preserve the CFH schema and existing session cookie", asy
   try {
     const server = load("lib/supabase.ts", {
       "@supabase/ssr": { createServerClient: makeClient },
-      "next/headers": { cookies: async () => ({ getAll: () => [cookie], set: () => {} }) },
+      "next/headers": { cookies: async () => ({ get: () => undefined, getAll: () => [cookie], set: () => {} }) },
     });
     const db = await server.createClient();
     const restored = await db.auth.getSession();
@@ -77,5 +81,50 @@ test("server and proxy preserve the CFH schema and existing session cookie", asy
       if (previous[name] === undefined) delete process.env[name];
       else process.env[name] = previous[name];
     }
+  }
+});
+
+test("session-only writes remove expiration from session chunks but keep deletion and PKCE options", () => {
+  const { authCookieOptions } = authCookies;
+  const expires = new Date("2027-01-01T00:00:00Z");
+  const durable = { maxAge: 3600, expires, path: "/", httpOnly: true };
+  assert.equal(authCookieOptions("cfh-auth", "session", durable, false), durable);
+  for (const name of ["cfh-auth", "cfh-auth.0", "cfh-auth.1"]) {
+    assert.deepEqual(authCookieOptions(name, "session", durable, true), { path: "/", httpOnly: true });
+  }
+  const remove = { ...durable, maxAge: 0 };
+  assert.equal(authCookieOptions("cfh-auth.0", "", remove, true), remove);
+  assert.equal(authCookieOptions("cfh-auth-code-verifier", "verifier", durable, true), durable);
+});
+
+test("callback uses the browser preference only after a successful code exchange", async () => {
+  for (const [preference, valid] of [[undefined, true], ["0", true], ["1", true], ["1", false]] as const) {
+    const writes: any[][] = [];
+    const callback = load("app/auth/callback/route.ts", {
+      "next/server": { NextResponse },
+      "next/headers": { cookies: async () => ({
+        get: () => preference === undefined ? undefined : { value: preference },
+        set: (...args: any[]) => { writes.push(args); },
+      }) },
+      "@/lib/filters": { callbackFailurePath, safeNext },
+      "@/lib/supabase": {
+        isDemo: () => false,
+        configured: () => true,
+        createClient: async (sessionOnly: boolean) => {
+          assert.equal(sessionOnly, preference !== "1");
+          return { auth: { exchangeCodeForSession: async (code: string) => {
+            assert.equal(code, "synthetic");
+            return { error: valid ? null : new Error("Invalid code") };
+          } } };
+        },
+      },
+    });
+    const request = new NextRequest("https://cfh.example.invalid/auth/callback?code=synthetic&next=%2Faccount");
+    const response = await callback.GET(request);
+    assert.equal(new URL(response.headers.get("location")).pathname, valid ? "/account" : "/login");
+    assert.deepEqual(writes.map(([name, value, options]) => [name, value, options.maxAge]), valid ? [
+      [authCookies.sessionOnlyCookie, preference === "1" ? "" : "1", preference === "1" ? 0 : undefined],
+      [authCookies.pendingRememberCookie, "", 0],
+    ] : []);
   }
 });

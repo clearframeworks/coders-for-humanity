@@ -1,10 +1,11 @@
 "use server";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient, configured, isDemo, githubAuthEnabled } from "@/lib/supabase";
 import { proposalSchema, profileSchema } from "@/lib/validation";
 import { safeNext } from "@/lib/filters";
+import { pendingRememberCookie, preferenceCookieOptions, sessionOnlyCookie } from "@/lib/auth-cookies";
 export type ActionState = { error?: string; message?: string; id?: string; field?: string };
 function siteUrl() {
   const url = process.env.NEXT_PUBLIC_SITE_URL;
@@ -157,6 +158,9 @@ export async function signIn(
     const db = await createClient();
     const next = safeNext(String(form.get("next") || ""));
     const callback = `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`;
+    const jar = await cookies();
+    const remember = form.get("remember") === "on";
+    const options = preferenceCookieOptions(siteUrl().startsWith("https:"));
     if (form.get("provider") === "github") {
       if (!githubAuthEnabled())
         return { error: "GitHub sign-in is unavailable. Use your email to continue." };
@@ -186,11 +190,14 @@ export async function signIn(
               ? "Too many email requests. Wait a few minutes before requesting another link."
               : "A sign-in email could not be sent. Please wait a moment and try again.",
         };
+      jar.set(pendingRememberCookie, remember ? "1" : "0", { ...options, maxAge: 3600 });
       return {
         message:
           "Check your email for a sign-in link. It will return you to this site.",
       };
     }
+    if (destination)
+      jar.set(pendingRememberCookie, remember ? "1" : "0", { ...options, maxAge: 3600 });
   } catch (e) {
     return { error: message(e) };
   }
@@ -200,6 +207,11 @@ export async function signIn(
 export async function signOut() {
   await checkOrigin();
   const db = await createClient();
-  await db.auth.signOut();
+  const { error } = await db.auth.signOut({ scope: "local" });
+  if (error) throw new Error("Sign-out failed. Please try again.");
+  const jar = await cookies();
+  const options = { ...preferenceCookieOptions(siteUrl().startsWith("https:")), maxAge: 0 };
+  jar.set(pendingRememberCookie, "", options);
+  jar.set(sessionOnlyCookie, "", options);
   redirect("/");
 }
