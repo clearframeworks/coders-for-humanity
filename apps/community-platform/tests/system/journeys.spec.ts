@@ -174,6 +174,7 @@ for (const remember of [false, true]) {
       await reopened.close();
     }
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
+    await expect(page).toHaveURL("http://127.0.0.1:3101/");
     await page.goto("/account");
     await expect(page).toHaveURL(/\/login\?next=/);
     expect((await context.cookies()).filter(cookie => cookie.name.startsWith("cfh-auth") || cookie.name === "cfh-session-only" || cookie.name === "cfh-pending-remember")).toEqual([]);
