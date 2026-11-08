@@ -35,3 +35,12 @@ test("PDF listing leads to the released page assembler", async ({ page }) => {
   await expect(page.getByRole("link", { name: /View 64-bit Windows release/ })).toHaveAttribute("href", "https://github.com/clearframeworks/cfh-pdf/releases/tag/cfh-pdf-0.1.0");
   await expect(page.getByText(/digital signatures will not remain valid/)).toBeVisible();
 });
+
+test("File Checker page explains the remote workspace and links to its release", async ({ page }) => {
+  await page.goto("/software");
+  await page.getByRole("link", { name: "Explore CFH File Checker" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("CFH File Checker");
+  await expect(page.getByRole("link", { name: /View Windows release/ })).toHaveAttribute("href", "https://github.com/clearframeworks/cfh-file-checker/releases/tag/v0.1.0");
+  await expect(page.getByText(/cannot prove a file is safe/)).toBeVisible();
+  await expect(page.getByText(/Do not submit private links or secrets/)).toBeVisible();
+});
