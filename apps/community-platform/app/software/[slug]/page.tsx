@@ -24,7 +24,7 @@ export default async function ProductPage({ params }: PageProps) {
         </div>
         <p>{product.description}</p>
         <div className="software-actions"><a className="button primary" href={product.release}>{product.releaseLabel} ↗</a><a className="button" href={product.source}>Browse source ↗</a></div>
-        <p className="software-detail">Free · {product.license}{product.upstream && ` · Based on ${product.upstream}`}</p>
+        <p className="software-detail">Stage: {product.stage} · Free · {product.license}{product.upstream && ` · Based on ${product.upstream}`}</p>
       </header>
       <section className="software-start" aria-labelledby="before-download"><h2 id="before-download">Before you download</h2><ul>{product.details.map((detail) => <li key={detail}>{detail}</li>)}</ul></section>
       <section className="software-source" aria-labelledby="source-heading"><h2 id="source-heading">Open source, with credit</h2><p>{product.upstream ? `${product.name} is a CFH fork of ${product.upstream}. The release page includes the Windows installer and source; the repository contains the fork and its license information.` : `${product.name} is an open-source CFH project. The release page includes the Windows installer and source; the repository contains license information.`}</p><a className="text-link" href={product.source}>View the {product.name} repository ↗</a></section>
