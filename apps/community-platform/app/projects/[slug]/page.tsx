@@ -153,6 +153,8 @@ export default async function ProjectPage({
                   </a>
                 </p>
               ))
+            ) : p.slug === "pc-bridge" ? (
+              <p><a href="https://github.com/clearframeworks/coders-for-humanity/tree/main/products/pc-phone-bridge">Browse the prototype source ↗</a></p>
             ) : (
               <p>
                 No repository is linked. Source and code review will live on

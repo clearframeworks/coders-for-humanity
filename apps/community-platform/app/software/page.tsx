@@ -22,7 +22,7 @@ export default function Software() {
           <img className="software-mark" src="/software/finance.svg" alt="" width="72" height="72" />
           <div><h2 id="finance-heading"><Link href="/software/finance-workspace">Your finances</Link></h2>
             <p>See how paydays, bills, and everyday spending affect the money ahead. Import transaction CSVs and compare spending plans on your own computer.</p>
-            <p className="software-detail">Windows installer · MIT license · Full source included</p>
+            <p className="software-detail">Stage: Released · Windows installer · MIT license · Full source included</p>
           </div>
           <Link className="button primary" href="/software/finance-workspace">Explore Your finances →</Link>
         </article>
@@ -33,7 +33,7 @@ export default function Software() {
           <article className="software-listing software-product-listing">
             <img className="software-mark" src={`/software/${product.slug}.svg`} alt="" width="72" height="72" />
             <div><h2 id={`${product.slug}-heading`}><Link href={`/software/${product.slug}`}>{product.name}</Link></h2>
-              <p>{product.summary}</p><p className="software-detail">{product.label} · {product.license}</p>
+              <p>{product.summary}</p><p className="software-detail">Stage: {product.stage} · {product.label} · {product.license}</p>
             </div>
             <Link className="button primary" href={`/software/${product.slug}`}>Explore {product.name} →</Link>
           </article>

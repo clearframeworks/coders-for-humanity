@@ -21,7 +21,7 @@ export default function FinanceSoftware() {
           <a className="button" href="/downloads/finance-workspace.zip" download>Full source (.zip)</a>
           <a className="button" href="https://github.com/clearframeworks/coders-for-humanity/tree/main/products/finance-workspace">Browse the full source ↗</a>
         </div>
-        <p className="software-detail">Free · MIT licensed · No account or AI subscription required</p>
+        <p className="software-detail">Stage: Released · Free · MIT licensed · No account or AI subscription required</p>
       </header>
       <section className="software-start" aria-labelledby="start-heading">
         <h2 id="start-heading">Download. Install. Open.</h2>
