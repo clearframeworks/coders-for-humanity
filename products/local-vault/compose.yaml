@@ -1,0 +1,14 @@
+name: local-vault
+services:
+  vault:
+    image: vaultwarden/server:1.37.5
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8787:80"
+    volumes:
+      - vault_data:/data
+    environment:
+      DOMAIN: ${VAULT_DOMAIN:-http://localhost:8787}
+      SIGNUPS_ALLOWED: ${VAULT_SIGNUPS_ALLOWED:-false}
+volumes:
+  vault_data:

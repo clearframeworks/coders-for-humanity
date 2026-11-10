@@ -1,0 +1,8 @@
+{
+    admin off
+    default_sni {$TETHER_IP}
+}
+https://{$TETHER_IP}:8443 {
+    tls internal
+    reverse_proxy vault:80
+}

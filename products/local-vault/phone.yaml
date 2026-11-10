@@ -1,0 +1,18 @@
+services:
+  vault:
+    environment:
+      DOMAIN: https://${TETHER_IP:?Set TETHER_IP to the computer hotspot address}:8443
+  phone_https:
+    image: caddy:2.10.2
+    restart: unless-stopped
+    ports:
+      - "${TETHER_IP:?Set TETHER_IP}:8443:8443"
+    environment:
+      TETHER_IP: ${TETHER_IP:?Set TETHER_IP}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - phone_https_data:/data
+      - phone_https_config:/config
+volumes:
+  phone_https_data:
+  phone_https_config:

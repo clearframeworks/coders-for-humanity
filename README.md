@@ -21,6 +21,10 @@ The finance app starts empty and stores your records on your computer. AI assist
 
 *Your finances, shown with the app's fictional example plan.*
 
+## Experimental source
+
+**[Local Vault](products/local-vault/)** is a work-in-progress Windows launcher for a locally hosted Vaultwarden server. Its account, import, recovery, phone, and AI access flows have not been fully verified. It requires Docker Desktop; one-time manual sharing also requires Node.js. **Do not use it for real passwords yet.** The source includes setup files; it is not a finished standalone installer.
+
 ## Inside this repository
 
 Each downloadable app has its own folder under [`products/`](products/), with source, a license, and its start or setup files. The web catalog and dedicated product pages live under [`apps/community-platform/app/software/`](apps/community-platform/app/software/). Source ZIPs live under [`public/downloads/`](apps/community-platform/public/downloads/); Windows installers are published in [Releases](https://github.com/clearframeworks/coders-for-humanity/releases).
